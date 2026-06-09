@@ -20,6 +20,8 @@ import {
   createTheme,
   useMediaQuery,
 } from "@mui/material";
+import NanzasProject from "./components/proyects/nanzas/nanzas.jsx";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 function App() {
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
@@ -42,7 +44,6 @@ function App() {
   const handleThemeToggle = () => {
     setDarkMode((prevMode) => !prevMode);
   };
-
   const sectionRoutes = {
     "": "/",
     ux: "#ux",
@@ -80,66 +81,81 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box
-        sx={{
-          minHeight: "100vh",
-          bgcolor: theme.palette.background.default,
-          color: theme.palette.text.primary,
-        }}
-      >
-        <Box
-          sx={{
-            width: "100%",
-            position: "fixed",
-            top: 0,
-            left: 0,
-            zIndex: 1000,
-            height: "64px",
-          }}
-        >
-          <Toolbar
-            sx={{
-              color: theme.palette.text.primary,
-              backgroundColor: "transparent !important",
-            }}
-          >
-            <IconButton
-              color="inherit"
-              onClick={handleThemeToggle}
-              edge="start"
-            >
-              <WbSunnyIcon />
-            </IconButton>
-            <Typography variant="h6" sx={{ flexGrow: 1 }}></Typography>
-            {[
-              { text: "About Me", path: "#about" },
-              // { text: "Skills", path: "#skills" },
-              { text: "Bests Proyects", path: "#ux" },
-              { text: "Front Proyects", path: "#front" },
-              { text: "Contact", path: "#contact" },
-            ].map(({ text, path }) => (
-              <Button key={text} color="inherit" component="a" href={path}>
-                {text}
-              </Button>
-            ))}
-          </Toolbar>
-        </Box>
+      <BrowserRouter>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <Box
+                sx={{
+                  minHeight: "100vh",
+                  bgcolor: theme.palette.background.default,
+                  color: theme.palette.text.primary,
+                }}
+              >
+                <Box
+                  sx={{
+                    width: "100%",
+                    position: "fixed",
+                    top: 0,
+                    left: 0,
+                    zIndex: 1000,
+                    height: "64px",
+                  }}
+                >
+                  <Toolbar
+                    sx={{
+                      color: theme.palette.text.primary,
+                      backgroundColor: "transparent !important",
+                    }}
+                  >
+                    <IconButton
+                      color="inherit"
+                      onClick={handleThemeToggle}
+                      edge="start"
+                    >
+                      <WbSunnyIcon />
+                    </IconButton>
+                    <Typography variant="h6" sx={{ flexGrow: 1 }}></Typography>
+                    {[
+                      { text: "About Me", path: "#about" },
+                      // { text: "Skills", path: "#skills" },
+                      { text: "Bests Proyects", path: "#ux" },
+                      { text: "Front Proyects", path: "#front" },
+                      { text: "Contact", path: "#contact" },
+                    ].map(({ text, path }) => (
+                      <Button
+                        key={text}
+                        color="inherit"
+                        component="a"
+                        href={path}
+                      >
+                        {text}
+                      </Button>
+                    ))}
+                  </Toolbar>
+                </Box>
 
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 30,
-          }}
-        >
-          <Header id="header" />
-          <Ux id="ux" />
-          <About id="about" />
-          {/* <Skills id="skills" /> */}
-          <Front id="front" />
-          <Contact id="contact" />
-        </Box>
-      </Box>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 30,
+                  }}
+                >
+                  <Header id="header" />
+                  <Ux id="ux" />
+                  <About id="about" />
+                  {/* <Skills id="skills" /> */}
+                  <Front id="front" sx={{ scrollMarginTop: "64px" }} />
+                  <Contact id="contact" />
+                </Box>
+              </Box>
+            }
+          />
+          <Route path="/project/nanzas" element={<NanzasProject />} />
+        </Routes>
+      </BrowserRouter>
     </ThemeProvider>
   );
 }
