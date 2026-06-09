@@ -10,33 +10,35 @@ import {
 } from "@mui/material";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
+import nanzasLogo from "../../assets/nanzas-logo.png";
+
 // ─── Mock data ────────────────────────────────────────────────────────────────
 const projects = [
-  {
-    id: 1,
-    variant: "vertical", // image on top
-    category: "Case study",
-    role: "Product design",
-    year: "2024",
-    title: "Rediseño de onboarding para app financiera",
-    description:
-      "Investigación de usuarios, mapeo de pain points y prototipado de alta fidelidad para reducir la tasa de abandono en el flujo de registro en un 38%.",
-    tools: ["Figma", "Maze", "Miro"],
-    link: "#",
-    image: null, // replace with your image URL
-  },
+  // {
+  //   id: 1,
+  //   variant: "vertical", // image on top
+  //   category: "Case study",
+  //   role: "Product design",
+  //   year: "2024",
+  //   title: "Rediseño de onboarding para app financiera",
+  //   description:
+  //     "Investigación de usuarios, mapeo de pain points y prototipado de alta fidelidad para reducir la tasa de abandono en el flujo de registro en un 38%.",
+  //   tools: ["Figma", "Maze", "Miro"],
+  //   link: "#",
+  //   image: null, // replace with your image URL
+  // },
   {
     id: 2,
     variant: "horizontal", // image on left
     category: "Case study",
-    role: "UX Research",
-    year: "2023",
-    title: "Sistema de diseño para plataforma educativa",
+    role: "UX Design / FrontEnd",
+    year: "2026",
+    title: 'Finances App "Nanzas"',
     description:
-      "Definición de tokens, componentes y patrones de interacción para unificar la experiencia en web y mobile de más de 200k usuarios activos.",
-    tools: ["Figma", "Storybook", "Notion"],
+      "Designed and developed a personal finance app from scratch mobile and web, covering the full product cycle from UX research and wireframing to a fully responsive React interface.",
+    tools: ["Figma", "Design system", "React"],
     link: "#",
-    image: null,
+    image: nanzasLogo,
   },
 ];
 
