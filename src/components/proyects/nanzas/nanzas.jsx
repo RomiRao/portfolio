@@ -1,7 +1,10 @@
 import { useState } from "react";
-import { Box, Typography, Button, Chip } from "@mui/material";
+import { Box, Typography, Button, Chip, IconButton } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import { useDarkMode } from "../../../context/themeContext";
+import WbSunnyIcon from "@mui/icons-material/WbSunny";
+import DarkModeIcon from "@mui/icons-material/DarkMode";
 
 const green = {
   primary: "#3A6B35",
@@ -352,15 +355,17 @@ function PhoneMockup({ activeScreen }) {
 }
 
 export default function NanzasProject() {
+  const { darkMode, handleThemeToggle, theme } = useDarkMode();
   const [activeScreen, setActiveScreen] = useState("login");
 
   const currentNote = screens.find((s) => s.id === activeScreen)?.note;
 
+  if (!theme) return null;
   return (
     <Box
       sx={{
-        minHeight: "100vh",
-        bgcolor: green.soft,
+        minHeight: "100dvh",
+
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -369,6 +374,9 @@ export default function NanzasProject() {
         gap: 6,
       }}
     >
+      <IconButton color="inherit" onClick={handleThemeToggle} edge="start">
+        {darkMode ? <WbSunnyIcon /> : <DarkModeIcon />}
+      </IconButton>
       {/* Header */}
       <Box sx={{ textAlign: "center", maxWidth: 600 }}>
         <Chip
