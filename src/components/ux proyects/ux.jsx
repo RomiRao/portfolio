@@ -37,7 +37,7 @@ const projects = [
     description:
       "Designed and developed a personal finance app from scratch mobile and web, covering the full product cycle from UX research and wireframing to a fully responsive React interface.",
     tools: ["Figma", "Design system", "React"],
-    link: "#",
+    link: "/project/nanzas",
     image: nanzasLogo,
   },
 ];
