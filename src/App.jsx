@@ -43,6 +43,15 @@ function App() {
     setDarkMode((prevMode) => !prevMode);
   };
 
+  const sectionRoutes = {
+    "": "/",
+    ux: "#ux",
+    about: "#about",
+    skills: "#skills",
+    front: "#front",
+    contact: "#contact",
+  };
+
   useEffect(() => {
     const observers = [];
 
@@ -127,7 +136,7 @@ function App() {
           <Ux id="ux" />
           <About id="about" />
           {/* <Skills id="skills" /> */}
-          <Front id="front" sx={{ scrollMarginTop: "64px" }} />
+          <Front id="front" />
           <Contact id="contact" />
         </Box>
       </Box>
