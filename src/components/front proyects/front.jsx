@@ -149,7 +149,7 @@ function Front({ id }) {
   // }, []);
 
   return (
-    <section id={id} ref={ref} style={style}>
+    <section id={id} ref={ref} style={{ ...style, scrollMarginTop: "64px" }}>
       <Box
         sx={{
           width: "100%",

@@ -104,8 +104,8 @@ function App() {
             <Typography variant="h6" sx={{ flexGrow: 1 }}></Typography>
             {[
               { text: "About Me", path: "#about" },
-              { text: "Skills", path: "#skills" },
-              { text: "Ux Proyects", path: "#ux" },
+              // { text: "Skills", path: "#skills" },
+              { text: "Bests Proyects", path: "#ux" },
               { text: "Front Proyects", path: "#front" },
               { text: "Contact", path: "#contact" },
             ].map(({ text, path }) => (
@@ -127,7 +127,7 @@ function App() {
           <Ux id="ux" />
           <About id="about" />
           {/* <Skills id="skills" /> */}
-          <Front id="front" />
+          <Front id="front" sx={{ scrollMarginTop: "64px" }} />
           <Contact id="contact" />
         </Box>
       </Box>

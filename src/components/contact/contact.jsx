@@ -18,7 +18,7 @@ import { useFadeIn } from "../../hooks/useFadeIn";
 function Contact({ id }) {
   const { ref, style } = useFadeIn({ delay: 200 });
   return (
-    <section id={id} ref={ref} style={style}>
+    <section id={id} ref={ref} style={{ ...style, scrollMarginTop: "64px" }}>
       <Box
         sx={{
           width: "100%",
