@@ -1,177 +1,14 @@
 import React, { useState } from "react";
 import { Box, Typography } from "@mui/material";
-import nanzasLogo from "../../../assets/nanzas-logo-2.svg";
 
-const colors = {
-  primary: "#376632", // Verde oscuro para texto y botón
-  bgGreen: "#DCE7D6", // Verde claro para el fondo superior
-  border: "#8BA783", // Verde medio para los bordes de los inputs
-};
+import { colors } from "./colors.js";
 
-// ==========================================
-// 1. COMPONENTE: PANTALLA DE LOGIN
-// ==========================================
-function LoginScreen({ onLogin }) {
-  return (
-    <Box
-      sx={{
-        flex: 1,
-        bgcolor: "white",
-        borderTopLeftRadius: "32px",
-        borderTopRightRadius: "32px",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        px: 4,
-        pt: 6,
-        pb: 4,
-        mt: 1,
-      }}
-    >
-      {/* Logo */}
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 1.5,
-          mb: 4,
-        }}
-      >
-        <Box
-          component="img"
-          src={nanzasLogo}
-          alt="Nanzas Logo"
-          sx={{ width: 100, height: 100, objectFit: "contain" }}
-        />
-        <Typography
-          sx={{ fontSize: 28, fontWeight: 500, color: colors.primary }}
-        >
-          Nanzas
-        </Typography>
-      </Box>
+import LoginScreen from "./screens/LoginScreen";
+import SignupScreen from "./screens/SignupScreen";
+import DashboardScreen from "./screens/DashboardScreen";
 
-      {/* Formularios */}
-      <Box
-        sx={{
-          width: "100%",
-          display: "flex",
-          flexDirection: "column",
-          gap: 2.5,
-        }}
-      >
-        <Box>
-          <Typography
-            sx={{ fontSize: 14, color: "#111", mb: 0.8, fontWeight: 500 }}
-          >
-            Email
-          </Typography>
-          <Box
-            sx={{
-              height: 44,
-              border: `1px solid ${colors.border}`,
-              borderRadius: "6px",
-              bgcolor: "white",
-            }}
-          />
-        </Box>
-
-        <Box>
-          <Typography
-            sx={{ fontSize: 14, color: "#111", mb: 0.8, fontWeight: 500 }}
-          >
-            Password
-          </Typography>
-          <Box
-            sx={{
-              height: 44,
-              border: `1px solid ${colors.border}`,
-              borderRadius: "6px",
-              bgcolor: "white",
-            }}
-          />
-        </Box>
-
-        {/* Botón Log in (Con evento para cambiar de pantalla) */}
-        <Box
-          onClick={onLogin}
-          sx={{
-            mt: 2,
-            height: 48,
-            bgcolor: colors.primary,
-            borderRadius: "8px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer", // Añadido para que se vea clickeable
-            "&:hover": { opacity: 0.9 },
-          }}
-        >
-          <Typography sx={{ color: "white", fontSize: 16, fontWeight: 600 }}>
-            Log in
-          </Typography>
-        </Box>
-
-        {/* Enlace Sign up */}
-        <Typography
-          sx={{
-            fontSize: 13,
-            color: colors.primary,
-            textAlign: "center",
-            mt: 1,
-            fontWeight: 500,
-            cursor: "pointer",
-          }}
-        >
-          Don't have an account? Sign up
-        </Typography>
-      </Box>
-    </Box>
-  );
-}
-
-// ==========================================
-// 2. COMPONENTE: PANTALLA EN CONSTRUCCIÓN
-// ==========================================
-function PlaceholderScreen({ onBack }) {
-  return (
-    <Box
-      sx={{
-        flex: 1,
-        bgcolor: "white",
-        borderTopLeftRadius: "32px",
-        borderTopRightRadius: "32px",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        mt: 1,
-      }}
-    >
-      <Typography sx={{ fontSize: 24, fontWeight: 600, color: "#111", mb: 2 }}>
-        Pantalla
-      </Typography>
-      <Typography
-        onClick={onBack}
-        sx={{
-          fontSize: 14,
-          color: colors.primary,
-          cursor: "pointer",
-          fontWeight: 500,
-          textDecoration: "underline",
-        }}
-      >
-        Volver al Login
-      </Typography>
-    </Box>
-  );
-}
-
-// ==========================================
-// 3. COMPONENTE PRINCIPAL: CARCASA DEL TELÉFONO
-// ==========================================
 export default function PhoneMockup() {
-  // Estado para controlar qué pantalla se renderiza
+  // Estado centralizado para controlar la navegación ("login", "signup", "dashboard")
   const [currentScreen, setCurrentScreen] = useState("login");
 
   return (
@@ -190,7 +27,9 @@ export default function PhoneMockup() {
         flexDirection: "column",
       }}
     >
-      {/* Header / Status bar */}
+      {/* ==========================================
+          HEADER / STATUS BAR (Fijo para todas las pantallas)
+          ========================================== */}
       <Box
         sx={{
           pt: "18px",
@@ -220,11 +59,10 @@ export default function PhoneMockup() {
           }}
         />
 
-        {/* Iconos derechos */}
+        {/* Iconos derechos (Señal, Wifi, Batería) */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
           <Typography sx={{ fontSize: 12, fontWeight: 800 }}>ıll</Typography>
           <Typography sx={{ fontSize: 12 }}>🛜</Typography>
-          {/* Icono de batería custom */}
           <Box
             sx={{
               width: 22,
@@ -258,14 +96,30 @@ export default function PhoneMockup() {
         </Box>
       </Box>
 
-      {/* RENDERIZADO DINÁMICO DE PANTALLAS */}
-      {currentScreen === "login" ? (
-        <LoginScreen onLogin={() => setCurrentScreen("dashboard")} />
-      ) : (
-        <PlaceholderScreen onBack={() => setCurrentScreen("login")} />
+      {/* ==========================================
+          ENRUTADOR DINÁMICO DE PANTALLAS
+          ========================================== */}
+      {currentScreen === "login" && (
+        <LoginScreen
+          onLogin={() => setCurrentScreen("dashboard")}
+          onNavigateToSignup={() => setCurrentScreen("signup")}
+        />
       )}
 
-      {/* Home indicator (La barrita de abajo de iOS) */}
+      {currentScreen === "signup" && (
+        <SignupScreen
+          onLogin={() => setCurrentScreen("dashboard")}
+          onNavigateToLogin={() => setCurrentScreen("login")}
+        />
+      )}
+
+      {currentScreen === "dashboard" && (
+        <DashboardScreen onBack={() => setCurrentScreen("login")} />
+      )}
+
+      {/* ==========================================
+          FOOTER / HOME INDICATOR (Fijo para todas las pantallas)
+          ========================================== */}
       <Box
         sx={{
           position: "absolute",
