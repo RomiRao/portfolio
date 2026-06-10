@@ -6,9 +6,9 @@ import { colors } from "./colors.js";
 import LoginScreen from "./screens/LoginScreen";
 import SignupScreen from "./screens/SignupScreen";
 import DashboardScreen from "./screens/DashboardScreen";
+import BottomNavBar from "./BottomNavBar.jsx";
 
 export default function PhoneMockup() {
-  // Estado centralizado para controlar la navegación ("login", "signup", "dashboard")
   const [currentScreen, setCurrentScreen] = useState("login");
 
   return (
@@ -114,7 +114,17 @@ export default function PhoneMockup() {
       )}
 
       {currentScreen === "dashboard" && (
-        <DashboardScreen onBack={() => setCurrentScreen("login")} />
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            flex: 1,
+            overflow: "hidden",
+          }}
+        >
+          <DashboardScreen onBack={() => setCurrentScreen("login")} />
+          <BottomNavBar />
+        </Box>
       )}
 
       {/* ==========================================
