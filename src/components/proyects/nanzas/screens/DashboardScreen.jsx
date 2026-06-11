@@ -159,8 +159,16 @@ function TransactionItem({ icon, iconBg, title, sub, amount }) {
 // ─── DASHBOARD SCREEN ─────────────────────────────────────────────────────────
 const PERIODS = ["Month", "Week", "Day", "Year", "Period"];
 
-export default function DashboardScreen() {
+export default function DashboardScreen({ onChange, payments }) {
   const [period, setPeriod] = useState("Month");
+
+  const TOTAL = payments.reduce((s, p) => s + p.amount, 0);
+  const paidAmount = payments
+    .filter((p) => p.paid)
+    .reduce((s, p) => s + p.amount, 0);
+  const paidCount = payments.filter((p) => p.paid).length;
+  const remaining = TOTAL - paidAmount;
+  const progress = TOTAL > 0 ? (paidAmount / TOTAL) * 100 : 0;
 
   return (
     <Box
@@ -283,7 +291,7 @@ export default function DashboardScreen() {
           </Typography>
           <LinearProgress
             variant="determinate"
-            value={40}
+            value={progress}
             sx={{
               height: 5,
               borderRadius: 3,
@@ -295,12 +303,23 @@ export default function DashboardScreen() {
               },
             }}
           />
-          <Typography sx={{ fontSize: 11, color: "#999" }}>
-            2 of 5 - $970 remaining
+          <Typography
+            sx={{
+              fontSize: 11,
+              color: paidCount === payments.length ? "#2e7d32" : "#999",
+              fontWeight: paidCount === payments.length ? 600 : 400,
+            }}
+          >
+            {paidCount === payments.length
+              ? "All payments have been done ✓"
+              : `${paidCount} of ${
+                  payments.length
+                } - $${remaining.toLocaleString()} remaining`}
           </Typography>
         </Box>
         <IconButton
           size="small"
+          onClick={() => onChange("paymentlist")}
           sx={{
             bgcolor: "#2e7d32",
             color: "#fff",

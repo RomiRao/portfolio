@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Typography } from "@mui/material";
 
 import { colors } from "./colors.js";
@@ -7,9 +7,54 @@ import LoginScreen from "./screens/LoginScreen";
 import SignupScreen from "./screens/SignupScreen";
 import DashboardScreen from "./screens/DashboardScreen";
 import BottomNavBar from "./BottomNavBar.jsx";
+import PaymentListScreen from "./screens/PaymentListScreen.jsx";
+
+//for paymentlist DEFAULT
+const initialPayments = [
+  { id: 1, name: "Gary's Food", category: "Pets", amount: 15, paid: true },
+  { id: 2, name: "Internet", category: "Services", amount: 635, paid: true },
+  { id: 3, name: "Gym", category: "Health", amount: 80, paid: false },
+  { id: 4, name: "Rent", category: "House", amount: 470, paid: false },
+  {
+    id: 5,
+    name: "Electricity",
+    category: "Services",
+    amount: 420,
+    paid: false,
+  },
+];
 
 export default function PhoneMockup() {
   const [currentScreen, setCurrentScreen] = useState("login");
+  const [payments, setPayments] = useState(() => {
+    const saved = localStorage.getItem("nanzas_payments");
+    return saved ? JSON.parse(saved) : initialPayments;
+  });
+
+  const handleNavigation = (screenId) => {
+    setCurrentScreen(screenId);
+    console.log(screenId);
+  };
+
+  const screens = {
+    dashboard: (
+      <DashboardScreen payments={payments} onChange={handleNavigation} />
+    ),
+    paymentlist: (
+      <PaymentListScreen
+        payments={payments}
+        setPayments={setPayments}
+        onBack={() => setCurrentScreen("dashboard")}
+      />
+    ),
+    /*    cards: <CardsScreen />,
+    categories: <CategoriesScreen />,
+    settings: <SettingsScreen />, */
+  };
+
+  useEffect(() => {
+    localStorage.setItem("nanzas_payments", JSON.stringify(payments));
+  }, [payments]);
 
   return (
     <Box
@@ -28,7 +73,7 @@ export default function PhoneMockup() {
       }}
     >
       {/* ==========================================
-          HEADER / STATUS BAR (Fijo para todas las pantallas)
+          HEADER / STATUS BAR 
           ========================================== */}
       <Box
         sx={{
@@ -101,19 +146,19 @@ export default function PhoneMockup() {
           ========================================== */}
       {currentScreen === "login" && (
         <LoginScreen
-          onLogin={() => setCurrentScreen("dashboard")}
-          onNavigateToSignup={() => setCurrentScreen("signup")}
+          onLogin={() => handleNavigation("dashboard")}
+          onNavigateToSignup={() => handleNavigation("signup")}
         />
       )}
 
       {currentScreen === "signup" && (
         <SignupScreen
-          onLogin={() => setCurrentScreen("dashboard")}
-          onNavigateToLogin={() => setCurrentScreen("login")}
+          onLogin={() => handleNavigation("dashboard")}
+          onNavigateToLogin={() => handleNavigation("login")}
         />
       )}
 
-      {currentScreen === "dashboard" && (
+      {currentScreen !== "signup" && currentScreen !== "login" && (
         <Box
           sx={{
             display: "flex",
@@ -122,8 +167,9 @@ export default function PhoneMockup() {
             overflow: "hidden",
           }}
         >
-          <DashboardScreen onBack={() => setCurrentScreen("login")} />
-          <BottomNavBar />
+          {screens[currentScreen]}
+
+          <BottomNavBar onChange={handleNavigation} />
         </Box>
       )}
 
@@ -133,7 +179,7 @@ export default function PhoneMockup() {
       <Box
         sx={{
           position: "absolute",
-          bottom: 12,
+          bottom: 5,
           left: "50%",
           transform: "translateX(-50%)",
           width: 120,
