@@ -6,7 +6,7 @@ import { colors } from "./colors.js";
 const NAV_ITEMS = [
   { id: "dashboard", icon: <Home />, label: "Home" },
   { id: "cards", icon: <CreditCard />, label: "Cards" },
-  { id: "add", icon: null, label: "" },
+
   { id: "categories", icon: <GridView />, label: "Categories" },
   { id: "settings", icon: <Settings />, label: "Settings" },
 ];
