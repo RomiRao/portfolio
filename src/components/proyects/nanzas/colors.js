@@ -4,4 +4,5 @@ export const colors = {
   border: "#8BA783",
   surface: "#ffffff",
   textMuted: "#666",
+  error: "#b71c1c",
 };

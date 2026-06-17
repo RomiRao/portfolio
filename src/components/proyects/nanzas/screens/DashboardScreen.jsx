@@ -7,6 +7,7 @@ import {
   LinearProgress,
   Divider,
   Avatar,
+  SvgIcon,
 } from "@mui/material";
 import {
   CalendarToday,
@@ -18,6 +19,16 @@ import {
   Redeem,
 } from "@mui/icons-material";
 import { colors } from "../colors";
+import React from "react";
+
+import transactionIcon from "../../../../assets/icons/transaction-icon.svg";
+import cardIcon from "../../../../assets/icons/card-icon.svg";
+
+const DEFAULT_COLOR = "#2e7d32";
+
+function CategoryIcon() {
+  return <img src={transactionIcon} alt="transaction" width={20} height={20} />;
+}
 
 // ─── DONUT CHART SVG ──────────────────────────────────────────────────────────
 function DonutChart() {
@@ -162,6 +173,10 @@ const PERIODS = ["Month", "Week", "Day", "Year", "Period"];
 export default function DashboardScreen({ onChange, payments }) {
   const [period, setPeriod] = useState("Month");
 
+  const lastTransactions = JSON.parse(
+    localStorage.getItem("nanzas_transactions") || "[]"
+  ).slice(0, 5);
+
   const TOTAL = payments.reduce((s, p) => s + p.amount, 0);
   const paidAmount = payments
     .filter((p) => p.paid)
@@ -269,6 +284,60 @@ export default function DashboardScreen({ onChange, payments }) {
         </Box>
       </Box>
 
+      <Box sx={{ display: "flex", width: "100%", gap: 2, mb: 1.8 }}>
+        <Box
+          onClick={() => onChange("newtransaction")}
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "space-between",
+            cursor: "pointer",
+            bgcolor: "#fff",
+            borderRadius: 3,
+            py: 1,
+            px: 2,
+            gap: 1,
+            boxShadow: "0 1px 6px rgba(0,0,0,0.06)",
+            width: "100%",
+          }}
+        >
+          <img src={transactionIcon} alt="transaction" width={24} height={24} />
+          <Typography
+            variant="body2"
+            fontWeight={500}
+            sx={{ color: colors.primary, fontSize: "12px" }}
+          >
+            New Transaction
+          </Typography>
+        </Box>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "space-between",
+
+            bgcolor: "#fff",
+            borderRadius: 3,
+            py: 1,
+            px: 1,
+            gap: 1,
+            boxShadow: "0 1px 6px rgba(0,0,0,0.06)",
+            width: "100%",
+          }}
+        >
+          <img src={cardIcon} alt="transaction" width={24} height={24} />
+          <Typography
+            variant="body2"
+            fontWeight={500}
+            sx={{ color: colors.primary, fontSize: "12px" }}
+          >
+            New Card Expense
+          </Typography>
+        </Box>
+      </Box>
+
       {/* ── Payment list card ── */}
 
       <Box
@@ -364,29 +433,27 @@ export default function DashboardScreen({ onChange, payments }) {
           </Typography>
         </Box>
 
-        <TransactionItem
-          icon={<Storefront sx={{ color: "#fff", fontSize: 19 }} />}
-          iconBg="#4caf50"
-          title="Market"
-          sub="Food · 03/02/2026"
-          amount="- $500"
-        />
-        <Divider />
-        <TransactionItem
-          icon={<LocalGasStation sx={{ color: "#fff", fontSize: 19 }} />}
-          iconBg="#29b6f6"
-          title="Gas Station"
-          sub="Car · 03/02/2026"
-          amount="- $120"
-        />
-        <Divider />
-        <TransactionItem
-          icon={<Redeem sx={{ color: "#fff", fontSize: 19 }} />}
-          iconBg="#7986cb"
-          title="Gift Shop"
-          sub="Gifts · 03/02/2026"
-          amount="- $85"
-        />
+        {lastTransactions.length === 0 ? (
+          <Typography
+            sx={{ fontSize: 13, color: "#aaa", textAlign: "center", py: 2.5 }}
+          >
+            No transactions yet
+          </Typography>
+        ) : (
+          lastTransactions.map((tx, i) => (
+            <React.Fragment key={tx.id}>
+              {i > 0 && <Divider />}
+              <TransactionItem
+                icon={<CategoryIcon category={tx.category} />}
+                iconBg={DEFAULT_COLOR}
+                title={tx.description || tx.category}
+                sub={`${tx.category} · ${tx.date}`}
+                amount={`${tx.type === "expense" ? "- $" : "+ $"}${tx.amount}`}
+                isIncome={tx.type === "income"}
+              />
+            </React.Fragment>
+          ))
+        )}
       </Box>
     </Box>
   );
