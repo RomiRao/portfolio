@@ -9,6 +9,7 @@ import DashboardScreen from "./screens/DashboardScreen";
 import BottomNavBar from "./BottomNavBar.jsx";
 import PaymentListScreen from "./screens/PaymentListScreen.jsx";
 import NewTransactionScreen from "./screens/NewTransactionScreen";
+import CategoriesScreen from "./screens/CategoriesScreen.jsx";
 
 //for paymentlist DEFAULT
 const initialPayments = [
@@ -51,6 +52,9 @@ export default function PhoneMockup() {
     // ← nuevo
     newtransaction: (
       <NewTransactionScreen onBack={() => setCurrentScreen("dashboard")} />
+    ),
+    categories: (
+      <CategoriesScreen onBack={() => setCurrentScreen("dashboard")} />
     ),
     /*    cards: <CardsScreen />,
     categories: <CategoriesScreen />,
