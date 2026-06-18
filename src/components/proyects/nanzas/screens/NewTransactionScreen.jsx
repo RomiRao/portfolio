@@ -174,7 +174,7 @@ export default function NewTransactionScreen({ onBack, params }) {
           <ChevronLeft sx={{ fontSize: 22 }} />
         </IconButton>
         <Typography sx={{ fontSize: 20, fontWeight: 700, color: "#111" }}>
-          New transaction
+          {params?.editId ? "Edit transaction" : "New transaction"}
         </Typography>
       </Box>
 

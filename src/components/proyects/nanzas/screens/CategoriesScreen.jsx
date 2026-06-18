@@ -187,7 +187,7 @@ export default function CategoriesScreen() {
                 </MenuItem>
                 <MenuItem
                   onClick={() => handleDelete(menuCat?.id)}
-                  sx={{ fontSize: 13, color: "#d32f2f", gap: 1 }}
+                  sx={{ fontSize: 13, color: colors.error, gap: 1 }}
                 >
                   Delete
                 </MenuItem>

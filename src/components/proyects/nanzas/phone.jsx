@@ -32,12 +32,11 @@ export default function PhoneMockup() {
     const saved = localStorage.getItem("nanzas_payments");
     return saved ? JSON.parse(saved) : initialPayments;
   });
-
-  const handleNavigation = (screenId) => {
+  const [screenParams, setScreenParams] = useState(null);
+  const handleNavigation = (screenId, params = null) => {
     setCurrentScreen(screenId);
-    console.log(screenId);
+    setScreenParams(params);
   };
-
   const screens = {
     dashboard: (
       <DashboardScreen payments={payments} onChange={handleNavigation} />
@@ -51,7 +50,10 @@ export default function PhoneMockup() {
     ),
     // ← nuevo
     newtransaction: (
-      <NewTransactionScreen onBack={() => setCurrentScreen("dashboard")} />
+      <NewTransactionScreen
+        onBack={() => setCurrentScreen("dashboard")}
+        params={screenParams}
+      />
     ),
     categories: (
       <CategoriesScreen onBack={() => setCurrentScreen("dashboard")} />

@@ -546,12 +546,24 @@ export default function DashboardScreen({ onChange, payments }) {
           onClose={() => setMenuAnchor(null)}
           anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
           transformOrigin={{ vertical: "top", horizontal: "right" }}
+          slotProps={{
+            paper: {
+              sx: {
+                borderRadius: "12px",
+                boxShadow: "0px 4px 20px rgba(0,0,0,0.12)",
+                minWidth: 130,
+                bgcolor: "#fff",
+                backgroundImage: "none",
+              },
+            },
+          }}
         >
           <MenuItem
             onClick={() => {
               onChange("newtransaction", { editId: menuTx?.id });
               setMenuAnchor(null);
             }}
+            sx={{ fontSize: 13, color: "#1a1a1a", gap: 1 }}
           >
             Edit
           </MenuItem>
@@ -560,7 +572,7 @@ export default function DashboardScreen({ onChange, payments }) {
               handleDelete(menuTx?.id);
               setMenuAnchor(null);
             }}
-            sx={{ color: "error.main" }}
+            sx={{ color: colors.error }}
           >
             Delete
           </MenuItem>
