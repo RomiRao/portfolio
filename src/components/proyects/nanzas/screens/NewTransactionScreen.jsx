@@ -35,7 +35,7 @@ const labelSx = {
   cursor: "pointer",
 };
 
-export default function NewTransactionScreen({ onBack }) {
+export default function NewTransactionScreen({ onBack, params }) {
   const [tab, setTab] = useState("expense");
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
@@ -47,17 +47,32 @@ export default function NewTransactionScreen({ onBack }) {
     return JSON.parse(localStorage.getItem("nanzas_categories") || "[]");
   }, []);
 
+  useEffect(() => {
+    if (params?.editId) {
+      const stored = JSON.parse(
+        localStorage.getItem("nanzas_transactions") || "[]"
+      );
+      const txToEdit = stored.find((t) => t.id === params.editId);
+
+      if (txToEdit) {
+        setTab(txToEdit.type);
+        setCategory(txToEdit.categoryId.toString());
+        setDescription(txToEdit.description || "");
+        setAmount(txToEdit.amount.toString());
+        setDate(txToEdit.date);
+      }
+    }
+  }, [params]);
+
   const availableCategories = useMemo(() => {
     return allCategories.filter((c) => c.type === tab);
   }, [allCategories, tab]);
 
   useEffect(() => {
-    if (availableCategories.length > 0) {
+    if (!params?.editId && availableCategories.length > 0) {
       setCategory(availableCategories[0].id.toString());
-    } else {
-      setCategory("");
     }
-  }, [tab, availableCategories]);
+  }, [tab, availableCategories, params]);
 
   const showToast = (msg) => {
     setToast(msg);
@@ -82,34 +97,48 @@ export default function NewTransactionScreen({ onBack }) {
       showToast("Enter a valid amount");
       return;
     }
-    if (!date) {
-      showToast("Select a date");
-      return;
-    }
-    if (!category) {
-      showToast("Select a category first");
-      return;
-    }
-
-    const tx = {
-      id: Date.now(),
-      type: tab,
-      categoryId: category,
-      description: description.trim(),
-      amount: Number(parsedAmount.toFixed(2)),
-      date,
-      createdAt: new Date().toISOString(),
-    };
 
     const stored = JSON.parse(
       localStorage.getItem("nanzas_transactions") || "[]"
     );
-    stored.unshift(tx);
-    localStorage.setItem("nanzas_transactions", JSON.stringify(stored));
 
-    showToast("Transaction saved ✓");
-    onBack();
-    resetForm();
+    if (params?.editId) {
+      // MODO EDICIÓN: Actualizar el existente
+      const updatedList = stored.map((t) =>
+        t.id === params.editId
+          ? {
+              ...t,
+              type: tab,
+              categoryId: category,
+              description: description.trim(),
+              amount: Number(parsedAmount.toFixed(2)),
+              date,
+            }
+          : t
+      );
+      localStorage.setItem("nanzas_transactions", JSON.stringify(updatedList));
+      showToast("Transaction updated ✓");
+    } else {
+      // MODO NUEVO: Agregar al inicio
+      const tx = {
+        id: Date.now(),
+        type: tab,
+        categoryId: category,
+        description: description.trim(),
+        amount: Number(parsedAmount.toFixed(2)),
+        date,
+        createdAt: new Date().toISOString(),
+      };
+      stored.unshift(tx);
+      localStorage.setItem("nanzas_transactions", JSON.stringify(stored));
+      showToast("Transaction saved ✓");
+    }
+
+    // Retraso para que el usuario vea el mensaje antes de volver
+    setTimeout(() => {
+      onBack();
+      resetForm();
+    }, 1000);
   };
 
   const handleCancel = () => {

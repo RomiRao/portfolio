@@ -10,6 +10,16 @@ import {
   SvgIcon,
 } from "@mui/material";
 import {
+  Menu,
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+} from "@mui/material";
+import {
   CalendarToday,
   BarChart,
   ChevronRight,
@@ -140,15 +150,48 @@ function LegendItem({ color, label, pct }) {
   );
 }
 
+const isColorDark = (hex) => {
+  // Eliminar el '#' si existe
+  const c = hex.substring(1);
+  const rgb = parseInt(c, 16);
+  const r = (rgb >> 16) & 0xff;
+  const g = (rgb >> 8) & 0xff;
+  const b = (rgb >> 0) & 0xff;
+
+  // Fórmula de luminancia: (0.299*R + 0.587*G + 0.114*B)
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+  // Umbral: 0.5 es el punto medio.
+  // Si es menor a 0.5, es oscuro. Si es mayor, es claro.
+  return luminance < 0.7;
+};
+
 // ─── TRANSACTION ROW ──────────────────────────────────────────────────────────
-function TransactionItem({ icon, iconBg, title, sub, amount }) {
+function TransactionItem({ icon, iconBg, title, sub, amount, onMenuClick }) {
+  // Definimos cuál es el color oscuro de fondo (ajusta este valor al hex exacto que usas para el verde oscuro)
+  const isDark = isColorDark(iconBg);
+
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1.2, py: 0.8 }}>
       <Avatar
-        sx={{ bgcolor: iconBg, width: 38, height: 38, borderRadius: "10px" }}
+        sx={{
+          bgcolor: iconBg,
+          width: 38,
+          height: 38,
+          borderRadius: "10px",
+        }}
       >
-        {icon}
+        {/* Aplicamos el filtro al contenedor del icono */}
+        <Box
+          sx={{
+            filter: isDark ? "brightness(0) invert(1)" : "none",
+            transition: "filter 0.2s ease",
+          }}
+        >
+          {icon}
+        </Box>
       </Avatar>
+
       <Box sx={{ flex: 1 }}>
         <Typography
           sx={{ fontSize: 13, fontWeight: 600, color: "#111", lineHeight: 1.3 }}
@@ -157,25 +200,41 @@ function TransactionItem({ icon, iconBg, title, sub, amount }) {
         </Typography>
         <Typography sx={{ fontSize: 11, color: "#999" }}>{sub}</Typography>
       </Box>
-      <Typography sx={{ fontSize: 13, fontWeight: 600, color: "#c62828" }}>
+
+      <Typography
+        sx={{
+          fontSize: 13,
+          fontWeight: 600,
+          color: amount.includes("-") ? "#c62828" : "#2e7d32",
+        }}
+      >
         {amount}
       </Typography>
-      <IconButton size="small" sx={{ p: 0.3 }}>
+
+      <IconButton size="small" sx={{ p: 0.3 }} onClick={onMenuClick}>
         <MoreVert sx={{ fontSize: 17, color: "#bbb" }} />
       </IconButton>
     </Box>
   );
 }
-
 // ─── DASHBOARD SCREEN ─────────────────────────────────────────────────────────
 const PERIODS = ["Month", "Week", "Day", "Year", "Period"];
 
 export default function DashboardScreen({ onChange, payments }) {
   const [period, setPeriod] = useState("Month");
+  const [menuAnchor, setMenuAnchor] = useState(null);
+  const [menuTx, setMenuTx] = useState(null);
+  const [transactions, setTransactions] = useState(() =>
+    JSON.parse(localStorage.getItem("nanzas_transactions") || "[]")
+  );
 
   const lastTransactions = JSON.parse(
     localStorage.getItem("nanzas_transactions") || "[]"
   ).slice(0, 5);
+
+  const allCategories = JSON.parse(
+    localStorage.getItem("nanzas_categories") || "[]"
+  );
 
   const TOTAL = payments.reduce((s, p) => s + p.amount, 0);
   const paidAmount = payments
@@ -184,6 +243,25 @@ export default function DashboardScreen({ onChange, payments }) {
   const paidCount = payments.filter((p) => p.paid).length;
   const remaining = TOTAL - paidAmount;
   const progress = TOTAL > 0 ? (paidAmount / TOTAL) * 100 : 0;
+
+  //funciones de transacciones
+  const handleDelete = (id) => {
+    const updated = transactions.filter((tx) => tx.id !== id);
+    localStorage.setItem("nanzas_transactions", JSON.stringify(updated));
+    setTransactions(updated);
+    setMenuAnchor(null);
+  };
+
+  const handleEditSave = () => {
+    const updated = transactions.map((tx) =>
+      tx.id === editingTx.id
+        ? { ...tx, ...editingTx, amount: Number(editingTx.amount) }
+        : tx
+    );
+    localStorage.setItem("nanzas_transactions", JSON.stringify(updated));
+    setTransactions(updated);
+    setShowModal(false);
+  };
 
   return (
     <Box
@@ -432,28 +510,61 @@ export default function DashboardScreen({ onChange, payments }) {
             More
           </Typography>
         </Box>
-
-        {lastTransactions.length === 0 ? (
-          <Typography
-            sx={{ fontSize: 13, color: "#aaa", textAlign: "center", py: 2.5 }}
+        // 1. DENTRO DE TU MAPEO DE TRANSACCIONES:
+        {lastTransactions.map((tx) => {
+          const cat = allCategories.find(
+            (c) => c.id.toString() === tx.categoryId?.toString()
+          );
+          return (
+            <TransactionItem
+              key={tx.id}
+              icon={
+                cat ? (
+                  <img src={cat.icon} alt={cat.name} width={20} height={20} />
+                ) : (
+                  <CategoryIcon />
+                )
+              }
+              iconBg={cat?.color || colors.primary}
+              title={tx.description}
+              sub={
+                cat?.name ? `${cat.name} • ${tx.date}` : `General • ${tx.date}`
+              }
+              amount={`${tx.type === "expense" ? "-" : "+"}$${tx.amount}`}
+              onMenuClick={(e) => {
+                setMenuAnchor(e.currentTarget); // Establece dónde aparece el menú
+                setMenuTx(tx); // Guarda qué transacción se tocó
+              }}
+            />
+          );
+        })}
+        // 2. FUERA DEL MAPEO, AL FINAL DEL DASHBOARDSCREEN (antes del cierre
+        principal):
+        <Menu
+          anchorEl={menuAnchor}
+          open={Boolean(menuAnchor)}
+          onClose={() => setMenuAnchor(null)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+          transformOrigin={{ vertical: "top", horizontal: "right" }}
+        >
+          <MenuItem
+            onClick={() => {
+              onChange("newtransaction", { editId: menuTx?.id });
+              setMenuAnchor(null);
+            }}
           >
-            No transactions yet
-          </Typography>
-        ) : (
-          lastTransactions.map((tx, i) => (
-            <React.Fragment key={tx.id}>
-              {i > 0 && <Divider />}
-              <TransactionItem
-                icon={<CategoryIcon category={tx.category} />}
-                iconBg={DEFAULT_COLOR}
-                title={tx.description || tx.category}
-                sub={`${tx.category} · ${tx.date}`}
-                amount={`${tx.type === "expense" ? "- $" : "+ $"}${tx.amount}`}
-                isIncome={tx.type === "income"}
-              />
-            </React.Fragment>
-          ))
-        )}
+            Edit
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              handleDelete(menuTx?.id);
+              setMenuAnchor(null);
+            }}
+            sx={{ color: "error.main" }}
+          >
+            Delete
+          </MenuItem>
+        </Menu>
       </Box>
     </Box>
   );
