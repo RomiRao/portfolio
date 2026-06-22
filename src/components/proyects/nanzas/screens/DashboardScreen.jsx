@@ -30,6 +30,7 @@ import {
 } from "@mui/icons-material";
 import { colors } from "../colors";
 import React from "react";
+import { PieChart } from "react-minimal-pie-chart";
 
 import transactionIcon from "../../../../assets/icons/transaction-icon.svg";
 import cardIcon from "../../../../assets/icons/card-icon.svg";
@@ -40,94 +41,17 @@ function CategoryIcon() {
   return <img src={transactionIcon} alt="transaction" width={20} height={20} />;
 }
 
-// ─── DONUT CHART SVG ──────────────────────────────────────────────────────────
-function DonutChart() {
-  const segments = [
-    { pct: 30, color: "#4caf50" }, // Food
-    { pct: 20, color: "#29b6f6" }, // Car
-    { pct: 20, color: "#ab47bc" }, // Pets
-    { pct: 20, color: "#cddc39" }, // Cloth
-    { pct: 10, color: "#7986cb" }, // Gifts
-  ];
-  const r = 52;
-  const cx = 68;
-  const cy = 68;
-  const circumference = 2 * Math.PI * r;
-  const gap = 3;
-
-  let cumulativePct = 0;
-  const arcs = segments.map((seg) => {
-    const dash = (seg.pct / 100) * circumference - gap;
-    const offset = -(cumulativePct / 100) * circumference;
-    cumulativePct += seg.pct;
-    return (
-      <circle
-        key={seg.color}
-        cx={cx}
-        cy={cy}
-        r={r}
-        fill="none"
-        stroke={seg.color}
-        strokeWidth={13}
-        strokeDasharray={`${dash} ${circumference - dash}`}
-        strokeDashoffset={offset}
-        strokeLinecap="round"
-        style={{
-          transform: "rotate(-90deg)",
-          transformOrigin: `${cx}px ${cy}px`,
-        }}
-      />
-    );
-  });
-
-  return (
-    <svg width={136} height={136} viewBox="0 0 136 136">
-      {arcs}
-      <text
-        x={cx}
-        y={cy - 11}
-        textAnchor="middle"
-        fontSize={10.5}
-        fill="#888"
-        fontFamily="sans-serif"
-      >
-        Spending
-      </text>
-      <text
-        x={cx}
-        y={cy + 3}
-        textAnchor="middle"
-        fontSize={12}
-        fill="#c62828"
-        fontWeight="bold"
-        fontFamily="sans-serif"
-      >
-        -$2000
-      </text>
-      <text
-        x={cx}
-        y={cy + 17}
-        textAnchor="middle"
-        fontSize={10.5}
-        fill="#888"
-        fontFamily="sans-serif"
-      >
-        Income
-      </text>
-      <text
-        x={cx}
-        y={cy + 30}
-        textAnchor="middle"
-        fontSize={12}
-        fill="#2e7d32"
-        fontWeight="bold"
-        fontFamily="sans-serif"
-      >
-        +$2000
-      </text>
-    </svg>
-  );
-}
+// ─── PALETTE DE COLORES PARA CATEGORÍAS SIN COLOR ASIGNADO ───────────────────
+const AUTO_COLORS = [
+  "#4caf50",
+  "#29b6f6",
+  "#ab47bc",
+  "#cddc39",
+  "#7986cb",
+  "#ff7043",
+  "#26c6da",
+  "#ffca28",
+];
 
 // ─── LEGEND ITEM ──────────────────────────────────────────────────────────────
 function LegendItem({ color, label, pct }) {
@@ -150,6 +74,99 @@ function LegendItem({ color, label, pct }) {
   );
 }
 
+// ─── EMPTY STATE ──────────────────────────────────────────────────────────────
+function EmptyChart() {
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        py: 3,
+        gap: 1,
+      }}
+    >
+      <Typography sx={{ fontSize: 32 }}>📊</Typography>
+      <Typography sx={{ fontSize: 14, fontWeight: 600, color: "#555" }}>
+        No transactions found.
+      </Typography>
+      <Typography
+        sx={{ fontSize: 12, color: "#aaa", textAlign: "center", maxWidth: 200 }}
+      >
+        Add new transaction to reflect it here.
+      </Typography>
+    </Box>
+  );
+}
+
+// ─── HOOK: calcular segmentos del período ────────────────────────────────────
+function useChartData(period, transactions) {
+  // ← recibe transactions como parámetro
+  return React.useMemo(() => {
+    const allCats = JSON.parse(
+      localStorage.getItem("nanzas_categories") || "[]"
+    );
+    const now = new Date();
+
+    const filtered = transactions.filter((tx) => {
+      if (!tx.date) return true;
+
+      // Formato yyyy-mm-dd (con guiones)
+      const txDate = new Date(tx.date + "T00:00:00"); // forzar hora local, evitar offset UTC
+
+      if (period === "Day") return txDate.toDateString() === now.toDateString();
+      if (period === "Week") {
+        const weekAgo = new Date(now);
+        weekAgo.setDate(now.getDate() - 7);
+        return txDate >= weekAgo;
+      }
+      if (period === "Month") {
+        return (
+          txDate.getMonth() === now.getMonth() &&
+          txDate.getFullYear() === now.getFullYear()
+        );
+      }
+      if (period === "Year") return txDate.getFullYear() === now.getFullYear();
+      return true;
+    });
+
+    const expenses = filtered.filter((tx) => tx.type === "expense");
+    const totalSpending = expenses.reduce((s, tx) => s + Number(tx.amount), 0);
+    const totalIncome = filtered
+      .filter((tx) => tx.type === "income")
+      .reduce((s, tx) => s + Number(tx.amount), 0);
+
+    const grouped = {};
+    expenses.forEach((tx) => {
+      const key = tx.categoryId?.toString() || "general";
+      grouped[key] = (grouped[key] || 0) + Number(tx.amount);
+    });
+
+    // En el hook, al mapear segments, filtrá los que son 0 en amount:
+    const segments = Object.entries(grouped)
+      .map(([catId, amount], i) => {
+        const cat = allCats.find((c) => c.id?.toString() === catId);
+        const pct = totalSpending > 0 ? (amount / totalSpending) * 100 : 0;
+        return {
+          label: cat?.name || "General",
+          color: cat?.color || AUTO_COLORS[i % AUTO_COLORS.length],
+          amount,
+          pct: Math.round(pct),
+          pctDisplay: pct > 0 && pct < 1 ? "<1" : String(Math.round(pct)), // ← para mostrar
+        };
+      })
+      .filter((seg) => seg.amount > 0) // ← elimina segmentos vacíos del donut
+      .sort((a, b) => b.amount - a.amount);
+
+    return {
+      segments,
+      spending: totalSpending,
+      income: totalIncome,
+      hasData: transactions.length > 0, // ← usa el total, no solo el período
+    };
+  }, [period, transactions]); // ← transactions como dependencia
+}
 const isColorDark = (hex) => {
   // Eliminar el '#' si existe
   const c = hex.substring(1);
@@ -217,6 +234,85 @@ function TransactionItem({ icon, iconBg, title, sub, amount, onMenuClick }) {
     </Box>
   );
 }
+
+function DonutChart({ segments, spending, income }) {
+  const cx = 68,
+    cy = 68,
+    r = 50;
+  const strokeWidth = 14;
+  const circumference = 2 * Math.PI * r;
+
+  // Ordenar menor a mayor para que los chicos se dibujen encima
+  const sorted = [...segments].sort((a, b) => a.amount - b.amount);
+  const total = segments.reduce((s, x) => s + x.amount, 0);
+
+  let cumPct = 0;
+  const arcs = [...segments]
+    .sort((a, b) => b.amount - a.amount) // mayor primero (dibujado abajo)
+    .map((seg) => {
+      const pct = seg.amount / total;
+      const arcLen = pct * circumference;
+      const offset = circumference / 4 - cumPct * circumference; // rotación -90°
+      cumPct += pct;
+      return { ...seg, arcLen, offset };
+    });
+
+  return (
+    <Box sx={{ position: "relative", width: 136, height: 136, flexShrink: 0 }}>
+      <svg width={136} height={136} viewBox="0 0 136 136">
+        {/* Track gris de fondo */}
+        <circle
+          cx={cx}
+          cy={cy}
+          r={r}
+          fill="none"
+          stroke="#f0f0f0"
+          strokeWidth={strokeWidth}
+        />
+        {arcs.map((seg) => (
+          <circle
+            key={seg.label}
+            cx={cx}
+            cy={cy}
+            r={r}
+            fill="none"
+            stroke={seg.color}
+            strokeWidth={strokeWidth}
+            strokeLinecap="round" // ← redondeo nativo SVG
+            strokeDasharray={`${seg.arcLen} ${circumference}`}
+            strokeDashoffset={seg.offset}
+          />
+        ))}
+      </svg>
+
+      {/* Texto central */}
+      <Box
+        sx={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          pointerEvents: "none",
+        }}
+      >
+        <Typography sx={{ fontSize: 10, color: "#888" }}>Spending</Typography>
+        <Typography sx={{ fontSize: 11, fontWeight: 700, color: "#c62828" }}>
+          {spending > 0 ? `-$${spending.toLocaleString()}` : "$0"}
+        </Typography>
+        <Typography sx={{ fontSize: 10, color: "#888" }}>Income</Typography>
+        <Typography sx={{ fontSize: 11, fontWeight: 700, color: "#2e7d32" }}>
+          {income > 0 ? `+$${income.toLocaleString()}` : "$0"}
+        </Typography>
+      </Box>
+    </Box>
+  );
+}
+
 // ─── DASHBOARD SCREEN ─────────────────────────────────────────────────────────
 const PERIODS = ["Month", "Week", "Day", "Year", "Period"];
 
@@ -226,6 +322,10 @@ export default function DashboardScreen({ onChange, payments }) {
   const [menuTx, setMenuTx] = useState(null);
   const [transactions, setTransactions] = useState(() =>
     JSON.parse(localStorage.getItem("nanzas_transactions") || "[]")
+  );
+  const { segments, spending, income, hasData } = useChartData(
+    period,
+    transactions
   );
 
   const lastTransactions = JSON.parse(
@@ -262,6 +362,12 @@ export default function DashboardScreen({ onChange, payments }) {
     setTransactions(updated);
     setShowModal(false);
   };
+
+  const data = segments.map((seg) => ({
+    title: seg.label,
+    value: seg.amount,
+    color: seg.color,
+  }));
 
   return (
     <Box
@@ -350,16 +456,71 @@ export default function DashboardScreen({ onChange, payments }) {
         </Box>
 
         {/* Donut + legend */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <DonutChart />
-          <Box sx={{ flex: 1 }}>
-            <LegendItem color="#4caf50" label="Food" pct={30} />
-            <LegendItem color="#29b6f6" label="Car" pct={20} />
-            <LegendItem color="#ab47bc" label="Pets" pct={20} />
-            <LegendItem color="#cddc39" label="Cloth" pct={20} />
-            <LegendItem color="#7986cb" label="Gifts" pct={10} />
+        {hasData ? (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            {/* Donut con texto central */}
+            <Box
+              sx={{
+                position: "relative",
+                width: 136,
+                height: 136,
+                flexShrink: 0,
+              }}
+            >
+              <DonutChart
+                segments={segments}
+                spending={spending}
+                income={income}
+              />
+              {/* Texto superpuesto en el hueco del donut */}
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  pointerEvents: "none",
+                }}
+              >
+                <Typography sx={{ fontSize: 10, color: "#888" }}>
+                  Spending
+                </Typography>
+                <Typography
+                  sx={{ fontSize: 11, fontWeight: 700, color: "#c62828" }}
+                >
+                  {spending > 0 ? `-$${spending.toLocaleString()}` : "$0"}
+                </Typography>
+                <Typography sx={{ fontSize: 10, color: "#888" }}>
+                  Income
+                </Typography>
+                <Typography
+                  sx={{ fontSize: 11, fontWeight: 700, color: "#2e7d32" }}
+                >
+                  {income > 0 ? `+$${income.toLocaleString()}` : "$0"}
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* Leyenda */}
+            <Box sx={{ flex: 1 }}>
+              {segments.map((seg) => (
+                <LegendItem
+                  key={seg.label}
+                  color={seg.color}
+                  label={seg.label}
+                  pct={seg.pctDisplay ?? seg.pct}
+                />
+              ))}
+            </Box>
           </Box>
-        </Box>
+        ) : (
+          <EmptyChart />
+        )}
       </Box>
 
       <Box sx={{ display: "flex", width: "100%", gap: 2, mb: 1.8 }}>
