@@ -5,9 +5,7 @@ import {
   Chip,
   IconButton,
   LinearProgress,
-  Divider,
   Avatar,
-  SvgIcon,
 } from "@mui/material";
 import {
   Menu,
@@ -23,10 +21,8 @@ import {
   CalendarToday,
   BarChart,
   ChevronRight,
+  ChevronLeft,
   MoreVert,
-  Storefront,
-  LocalGasStation,
-  Redeem,
 } from "@mui/icons-material";
 import { colors } from "../colors";
 import React from "react";
@@ -41,7 +37,6 @@ function CategoryIcon() {
   return <img src={transactionIcon} alt="transaction" width={20} height={20} />;
 }
 
-// ─── PALETTE DE COLORES PARA CATEGORÍAS SIN COLOR ASIGNADO ───────────────────
 const AUTO_COLORS = [
   "#4caf50",
   "#29b6f6",
@@ -72,7 +67,6 @@ const DEFAULT_TRANSACTIONS = [
   },
 ];
 
-// ─── LEGEND ITEM ──────────────────────────────────────────────────────────────
 function LegendItem({ color, label, pct }) {
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 0.8, mb: 0.5 }}>
@@ -93,7 +87,6 @@ function LegendItem({ color, label, pct }) {
   );
 }
 
-// ─── EMPTY STATE ──────────────────────────────────────────────────────────────
 function EmptyChart() {
   return (
     <Box
@@ -119,32 +112,45 @@ function EmptyChart() {
   );
 }
 
-// ─── HOOK: calcular segmentos del período ────────────────────────────────────
-function useChartData(period, transactions) {
+// ─── HOOK: CALCULAR SEGMENTOS DEL PERÍODO ────────────────────────────────────
+function useChartData(period, transactions, refDate, customStart, customEnd) {
   return React.useMemo(() => {
     const allCats = JSON.parse(
       localStorage.getItem("nanzas_categories") || "[]"
     );
-    const now = new Date();
 
     const filtered = transactions.filter((tx) => {
       if (!tx.date) return true;
 
       const txDate = new Date(tx.date + "T00:00:00");
+      const target = new Date(refDate);
+      target.setHours(0, 0, 0, 0);
 
-      if (period === "Day") return txDate.toDateString() === now.toDateString();
+      if (period === "Day") {
+        return txDate.toDateString() === target.toDateString();
+      }
       if (period === "Week") {
-        const weekAgo = new Date(now);
-        weekAgo.setDate(now.getDate() - 7);
-        return txDate >= weekAgo;
+        const start = new Date(target);
+        start.setDate(start.getDate() - start.getDay()); // Domingo
+        const end = new Date(start);
+        end.setDate(end.getDate() + 6); // Sábado
+        return txDate >= start && txDate <= end;
       }
       if (period === "Month") {
         return (
-          txDate.getMonth() === now.getMonth() &&
-          txDate.getFullYear() === now.getFullYear()
+          txDate.getMonth() === target.getMonth() &&
+          txDate.getFullYear() === target.getFullYear()
         );
       }
-      if (period === "Year") return txDate.getFullYear() === now.getFullYear();
+      if (period === "Year") {
+        return txDate.getFullYear() === target.getFullYear();
+      }
+      if (period === "Period") {
+        if (!customStart || !customEnd) return true;
+        const s = new Date(customStart + "T00:00:00");
+        const e = new Date(customEnd + "T23:59:59");
+        return txDate >= s && txDate <= e;
+      }
       return true;
     });
 
@@ -179,24 +185,21 @@ function useChartData(period, transactions) {
       segments,
       spending: totalSpending,
       income: totalIncome,
-      hasData: transactions.length > 0,
+      hasData: filtered.length > 0,
     };
-  }, [period, transactions]);
+  }, [period, transactions, refDate, customStart, customEnd]);
 }
+
 const isColorDark = (hex) => {
-  // Eliminar el '#' si existe
   const c = hex.substring(1);
   const rgb = parseInt(c, 16);
   const r = (rgb >> 16) & 0xff;
   const g = (rgb >> 8) & 0xff;
   const b = (rgb >> 0) & 0xff;
-
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-
   return luminance < 0.7;
 };
 
-// ─── TRANSACTION ROW ──────────────────────────────────────────────────────────
 function TransactionItem({ icon, iconBg, title, sub, amount, onMenuClick }) {
   const isDark = isColorDark(iconBg);
 
@@ -210,7 +213,6 @@ function TransactionItem({ icon, iconBg, title, sub, amount, onMenuClick }) {
           borderRadius: "10px",
         }}
       >
-        {/* Aplicamos el filtro al contenedor del icono */}
         <Box
           sx={{
             filter: isDark ? "brightness(0) invert(1)" : "none",
@@ -262,20 +264,15 @@ function DonutChart({ segments, spending, income }) {
     .map((seg) => {
       const pct = total > 0 ? seg.amount / total : 0;
       const arcLen = pct * circumference;
-
       const gap = circumference - arcLen;
-
       const offset = circumference - cumPct * circumference;
-
       cumPct += pct;
-
       return { ...seg, arcLen, gap, offset, isFull: pct === 1 };
     });
 
   return (
     <Box sx={{ position: "relative", width: 136, height: 136, flexShrink: 0 }}>
       <svg width={136} height={136} viewBox="0 0 136 136">
-        {/* Track gris de fondo */}
         <circle
           cx={cx}
           cy={cy}
@@ -294,19 +291,15 @@ function DonutChart({ segments, spending, income }) {
             stroke={seg.color}
             strokeWidth={strokeWidth}
             strokeLinecap="round"
-            // Declaramos la longitud del trazo y la longitud del vacío
             strokeDasharray={
               seg.isFull ? undefined : `${seg.arcLen} ${seg.gap}`
             }
-            // Aplicamos el desfase
             strokeDashoffset={seg.isFull ? undefined : seg.offset}
-            // Rotamos todos los círculos uniformemente para que empiecen arriba al centro
             transform="rotate(-90 68 68)"
           />
         ))}
       </svg>
 
-      {/* Texto central */}
       <Box
         sx={{
           position: "absolute",
@@ -333,40 +326,104 @@ function DonutChart({ segments, spending, income }) {
     </Box>
   );
 }
+
 // ─── DASHBOARD SCREEN ─────────────────────────────────────────────────────────
 const PERIODS = ["Month", "Week", "Day", "Year", "Period"];
 
-export default function DashboardScreen({ onChange, payments }) {
+export default function DashboardScreen({ onChange, payments = [] }) {
   const [period, setPeriod] = useState("Month");
+
+  // Estados de control de Fechas dinámicas
+  const [refDate, setRefDate] = useState(new Date());
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
+  const [openDatePicker, setOpenDatePicker] = useState(false); // Modal general unificado
+
   const [menuAnchor, setMenuAnchor] = useState(null);
   const [menuTx, setMenuTx] = useState(null);
+  const [editingTx, setEditingTx] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+
   const [transactions, setTransactions] = useState(() => {
     const savedData = localStorage.getItem("nanzas_transactions");
-
-    if (savedData !== null) {
-      return JSON.parse(savedData);
-    }
-
+    if (savedData !== null) return JSON.parse(savedData);
     localStorage.setItem(
       "nanzas_transactions",
       JSON.stringify(DEFAULT_TRANSACTIONS)
     );
     return DEFAULT_TRANSACTIONS;
   });
+
   const { segments, spending, income, hasData } = useChartData(
     period,
-    transactions
+    transactions,
+    refDate,
+    customStart,
+    customEnd
   );
+
+  // Navegación secuencial por flechas (Día, Semana, Mes, Año)
+  const handlePrev = () => {
+    const d = new Date(refDate);
+    if (period === "Month") d.setMonth(d.getMonth() - 1);
+    else if (period === "Week") d.setDate(d.getDate() - 7);
+    else if (period === "Day") d.setDate(d.getDate() - 1);
+    else if (period === "Year") d.setFullYear(d.getFullYear() - 1);
+    setRefDate(d);
+  };
+
+  const handleNext = () => {
+    const d = new Date(refDate);
+    if (period === "Month") d.setMonth(d.getMonth() + 1);
+    else if (period === "Week") d.setDate(d.getDate() + 7);
+    else if (period === "Day") d.setDate(d.getDate() + 1);
+    else if (period === "Year") d.setFullYear(d.getFullYear() + 1);
+    setRefDate(d);
+  };
+
+  // Genera el texto legible en la barra superior
+  const getPeriodLabel = () => {
+    if (period === "Month") {
+      return refDate.toLocaleString("en-US", {
+        month: "long",
+        year: "numeric",
+      });
+    }
+    if (period === "Year") {
+      return refDate.getFullYear().toString();
+    }
+    if (period === "Day") {
+      return refDate.toLocaleDateString();
+    }
+    if (period === "Week") {
+      const start = new Date(refDate);
+      start.setDate(start.getDate() - start.getDay());
+      const end = new Date(start);
+      end.setDate(end.getDate() + 6);
+      return `${start.toLocaleDateString()} - ${end.toLocaleDateString()}`;
+    }
+    if (period === "Period") {
+      if (customStart && customEnd) return `${customStart} to ${customEnd}`;
+      return "Select custom period";
+    }
+    return "";
+  };
+
+  // Reinicia las fechas al cambiar entre pestañas principales
+  React.useEffect(() => {
+    if (period !== "Period") {
+      setRefDate(new Date());
+    } else if (!customStart && !customEnd) {
+      setOpenDatePicker(true); // Abre directo si no hay rango fijado
+    }
+  }, [period]);
 
   const totalBalance = transactions.reduce((acc, tx) => {
     const amount = Number(tx.amount) || 0;
     return tx.type === "income" ? acc + amount : acc - amount;
   }, 0);
 
-  const lastTransactions = JSON.parse(
-    localStorage.getItem("nanzas_transactions") || "[]"
-  ).slice(0, 5);
-
+  const lastTransactions = transactions.slice(0, 5);
   const allCategories = JSON.parse(
     localStorage.getItem("nanzas_categories") || "[]"
   );
@@ -379,7 +436,6 @@ export default function DashboardScreen({ onChange, payments }) {
   const remaining = TOTAL - paidAmount;
   const progress = TOTAL > 0 ? (paidAmount / TOTAL) * 100 : 0;
 
-  //funciones de transacciones
   const handleDelete = (id) => {
     const updated = transactions.filter((tx) => tx.id !== id);
     localStorage.setItem("nanzas_transactions", JSON.stringify(updated));
@@ -387,22 +443,88 @@ export default function DashboardScreen({ onChange, payments }) {
     setMenuAnchor(null);
   };
 
-  const handleEditSave = () => {
-    const updated = transactions.map((tx) =>
-      tx.id === editingTx.id
-        ? { ...tx, ...editingTx, amount: Number(editingTx.amount) }
-        : tx
-    );
-    localStorage.setItem("nanzas_transactions", JSON.stringify(updated));
-    setTransactions(updated);
-    setShowModal(false);
+  // RENDERIZADO DINÁMICO DE INPUTS DENTRO DEL MODAL
+  const renderPickerInput = () => {
+    if (period === "Month") {
+      const currentMonthStr = `${refDate.getFullYear()}-${String(
+        refDate.getMonth() + 1
+      ).padStart(2, "0")}`;
+      return (
+        <TextField
+          type="month"
+          label="Choose Month"
+          fullWidth
+          InputLabelProps={{ shrink: true }}
+          value={currentMonthStr}
+          onChange={(e) => {
+            if (e.target.value) {
+              const [y, m] = e.target.value.split("-");
+              const d = new Date(refDate);
+              d.setFullYear(parseInt(y), parseInt(m) - 1);
+              setRefDate(d);
+            }
+          }}
+        />
+      );
+    }
+    if (period === "Day" || period === "Week") {
+      return (
+        <TextField
+          type="date"
+          label={period === "Day" ? "Choose Day" : "Choose Day within Week"}
+          fullWidth
+          InputLabelProps={{ shrink: true }}
+          value={refDate.toISOString().split("T")[0]}
+          onChange={(e) => {
+            if (e.target.value) {
+              setRefDate(new Date(e.target.value + "T00:00:00"));
+            }
+          }}
+        />
+      );
+    }
+    if (period === "Year") {
+      return (
+        <TextField
+          type="number"
+          label="Choose Year"
+          fullWidth
+          value={refDate.getFullYear()}
+          onChange={(e) => {
+            const val = parseInt(e.target.value);
+            if (val) {
+              const d = new Date(refDate);
+              d.setFullYear(val);
+              setRefDate(d);
+            }
+          }}
+        />
+      );
+    }
+    if (period === "Period") {
+      return (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+          <TextField
+            type="date"
+            label="Start Date"
+            fullWidth
+            InputLabelProps={{ shrink: true }}
+            value={customStart}
+            onChange={(e) => setCustomStart(e.target.value)}
+          />
+          <TextField
+            type="date"
+            label="End Date"
+            fullWidth
+            InputLabelProps={{ shrink: true }}
+            value={customEnd}
+            onChange={(e) => setCustomEnd(e.target.value)}
+          />
+        </Box>
+      );
+    }
+    return null;
   };
-
-  const data = segments.map((seg) => ({
-    title: seg.label,
-    value: seg.amount,
-    color: seg.color,
-  }));
 
   return (
     <Box
@@ -413,7 +535,6 @@ export default function DashboardScreen({ onChange, payments }) {
         px: 2,
         pt: 1.5,
         pb: 1,
-        // Hide scrollbar visually
         "&::-webkit-scrollbar": { display: "none" },
         msOverflowStyle: "none",
         scrollbarWidth: "none",
@@ -425,8 +546,7 @@ export default function DashboardScreen({ onChange, payments }) {
           Balance
         </Typography>
         <Typography sx={{ fontSize: 24, fontWeight: 700, color: "#111" }}>
-          {/* 👇 NUEVO: Mostrar la variable dinámica */}$
-          {totalBalance.toLocaleString()}
+          ${totalBalance.toLocaleString()}
         </Typography>
       </Box>
 
@@ -441,7 +561,7 @@ export default function DashboardScreen({ onChange, payments }) {
         }}
       >
         {/* Period tabs */}
-        <Box sx={{ display: "flex", gap: 0.4, mb: 1.5 }}>
+        <Box sx={{ display: "flex", gap: 0.4, mb: 1.5, flexWrap: "wrap" }}>
           {PERIODS.map((p) => (
             <Chip
               key={p}
@@ -462,7 +582,7 @@ export default function DashboardScreen({ onChange, payments }) {
           ))}
         </Box>
 
-        {/* Date row */}
+        {/* Date row unificado e interactivo mediante Calendario */}
         <Box
           sx={{
             display: "flex",
@@ -471,22 +591,52 @@ export default function DashboardScreen({ onChange, payments }) {
             mb: 1.2,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <Typography sx={{ fontSize: 13, fontWeight: 500, color: "#222" }}>
-              July - 2026
-            </Typography>
-            <CalendarToday sx={{ fontSize: 14, color: "#999" }} />
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.2 }}>
+            {period !== "Period" && (
+              <IconButton size="small" onClick={handlePrev} sx={{ p: 0.2 }}>
+                <ChevronLeft sx={{ fontSize: 18, color: "#666" }} />
+              </IconButton>
+            )}
+
+            {/* Toda esta zona (Texto + Icono) ahora abre el modal correspondiente */}
+            <Box
+              onClick={() => setOpenDatePicker(true)}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 0.8,
+                cursor: "pointer",
+                px: 0.5,
+                borderRadius: "6px",
+                "&:hover": { bgcolor: "#f5f5f5" },
+              }}
+            >
+              <Typography sx={{ fontSize: 13, fontWeight: 500, color: "#222" }}>
+                {getPeriodLabel()}
+              </Typography>
+              <CalendarToday sx={{ fontSize: 15, color: "#2e7d32" }} />
+            </Box>
+
+            {period !== "Period" && (
+              <IconButton size="small" onClick={handleNext} sx={{ p: 0.2 }}>
+                <ChevronRight sx={{ fontSize: 18, color: "#666" }} />
+              </IconButton>
+            )}
           </Box>
+
           <Chip
             icon={<BarChart sx={{ fontSize: 15, color: "#fff !important" }} />}
             label="Summary"
+            onClick={() => onChange("summary")} // <── Agregamos esto para navegar
             sx={{
               bgcolor: "#2e7d32",
               color: "#fff",
               fontWeight: 600,
               fontSize: 11,
               height: 28,
+              cursor: "pointer",
               "& .MuiChip-label": { pl: 0.3 },
+              "&:hover": { bgcolor: "#1b5e20" },
             }}
           />
         </Box>
@@ -494,7 +644,6 @@ export default function DashboardScreen({ onChange, payments }) {
         {/* Donut + legend */}
         {hasData ? (
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            {/* Donut con texto central */}
             <Box
               sx={{
                 position: "relative",
@@ -508,41 +657,7 @@ export default function DashboardScreen({ onChange, payments }) {
                 spending={spending}
                 income={income}
               />
-              {/* Texto superpuesto en el hueco del donut */}
-              <Box
-                sx={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  pointerEvents: "none",
-                }}
-              >
-                <Typography sx={{ fontSize: 10, color: "#888" }}>
-                  Spending
-                </Typography>
-                <Typography
-                  sx={{ fontSize: 11, fontWeight: 700, color: "#c62828" }}
-                >
-                  {spending > 0 ? `-$${spending.toLocaleString()}` : "$0"}
-                </Typography>
-                <Typography sx={{ fontSize: 10, color: "#888" }}>
-                  Income
-                </Typography>
-                <Typography
-                  sx={{ fontSize: 11, fontWeight: 700, color: "#2e7d32" }}
-                >
-                  {income > 0 ? `+$${income.toLocaleString()}` : "$0"}
-                </Typography>
-              </Box>
             </Box>
-
-            {/* Leyenda */}
             <Box sx={{ flex: 1 }}>
               {segments.map((seg) => (
                 <LegendItem
@@ -559,6 +674,7 @@ export default function DashboardScreen({ onChange, payments }) {
         )}
       </Box>
 
+      {/* Botones de acción rápido */}
       <Box sx={{ display: "flex", width: "100%", gap: 2, mb: 1.8 }}>
         <Box
           onClick={() => onChange("newtransaction")}
@@ -592,7 +708,6 @@ export default function DashboardScreen({ onChange, payments }) {
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "space-between",
-
             bgcolor: "#fff",
             borderRadius: 3,
             py: 1,
@@ -613,14 +728,12 @@ export default function DashboardScreen({ onChange, payments }) {
         </Box>
       </Box>
 
-      {/* ── Payment list card ── */}
-
+      {/* Listado de Pagos */}
       <Box
         sx={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          mb: 1.2,
           bgcolor: "#fff",
           borderRadius: 3,
           p: 1.8,
@@ -676,7 +789,7 @@ export default function DashboardScreen({ onChange, payments }) {
         </IconButton>
       </Box>
 
-      {/* ── Last transactions card ── */}
+      {/* Ultimas transacciones */}
       <Box
         sx={{
           bgcolor: "#fff",
@@ -689,6 +802,7 @@ export default function DashboardScreen({ onChange, payments }) {
           sx={{
             display: "flex",
             alignItems: "center",
+            justifyValues: "space-between",
             justifyContent: "space-between",
             mb: 0.5,
           }}
@@ -736,8 +850,8 @@ export default function DashboardScreen({ onChange, payments }) {
                 }
                 amount={`${tx.type === "expense" ? "-" : "+"}$${tx.amount}`}
                 onMenuClick={(e) => {
-                  setMenuAnchor(e.currentTarget); // Establece dónde aparece el menú
-                  setMenuTx(tx); // Guarda qué transacción se tocó
+                  setMenuAnchor(e.currentTarget);
+                  setMenuTx(tx);
                 }}
               />
             );
@@ -772,16 +886,52 @@ export default function DashboardScreen({ onChange, payments }) {
             Edit
           </MenuItem>
           <MenuItem
-            onClick={() => {
-              handleDelete(menuTx?.id);
-              setMenuAnchor(null);
-            }}
+            onClick={() => handleDelete(menuTx?.id)}
             sx={{ color: colors.error }}
           >
             Delete
           </MenuItem>
         </Menu>
       </Box>
+
+      {/* ── MODAL DINÁMICO SELECTOR DE FECHAS SEGÚN EL PERÍODO ACTIVO ── */}
+      <Dialog
+        open={openDatePicker}
+        onClose={() => setOpenDatePicker(false)}
+        // Forzamos las propiedades del contenedor del modal
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            p: 1,
+            bgcolor: "#ffffff", // <── Fuerza el fondo blanco sólido
+            backgroundImage: "none", // <── Elimina gradientes molestos de MUI en modo oscuro
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{ fontWeight: 600, fontSize: "1.1rem", color: "#111" }}
+        >
+          Select Filter ({period})
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2, minWidth: 260 }}>
+          {/* Box contenedor para asegurar que los inputs nativos rendericen su calendario con fondo correcto */}
+          <Box sx={{ colorScheme: "light", pt: 1 }}>{renderPickerInput()}</Box>
+        </DialogContent>
+        <DialogActions sx={{ pb: 2, pr: 3 }}>
+          <Button
+            onClick={() => setOpenDatePicker(false)}
+            variant="contained"
+            sx={{
+              bgcolor: "#2e7d32",
+              "&:hover": { bgcolor: "#1b5e20" },
+              borderRadius: 2,
+              textTransform: "none",
+            }}
+          >
+            Accept
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
