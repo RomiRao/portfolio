@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Box, Typography } from "@mui/material";
 
 import { colors } from "./colors.js";
@@ -11,6 +11,7 @@ import PaymentListScreen from "./screens/PaymentListScreen.jsx";
 import NewTransactionScreen from "./screens/NewTransactionScreen";
 import CategoriesScreen from "./screens/CategoriesScreen.jsx";
 import SummaryScreen from "./screens/SummaryScreen.jsx";
+import HistoryScreen from "./screens/HistoryScreen.jsx";
 
 //for paymentlist DEFAULT
 const initialPayments = [
@@ -28,6 +29,7 @@ const initialPayments = [
 ];
 
 export default function PhoneMockup() {
+  const phoneRef = useRef(null);
   const [currentScreen, setCurrentScreen] = useState("login");
   const [payments, setPayments] = useState(() => {
     const saved = localStorage.getItem("nanzas_payments");
@@ -60,9 +62,14 @@ export default function PhoneMockup() {
       <CategoriesScreen onBack={() => setCurrentScreen("dashboard")} />
     ),
     summary: <SummaryScreen onChange={handleNavigation} />,
-    /*    cards: <CardsScreen />,
-    categories: <CategoriesScreen />,
-    settings: <SettingsScreen />, */
+    // 2. ← Añadimos 'history' a las pantallas disponibles
+    history: (
+      <HistoryScreen
+        onBack={() => setCurrentScreen("dashboard")}
+        onChange={handleNavigation}
+        phoneContainerRef={phoneRef}
+      />
+    ),
   };
 
   useEffect(() => {
@@ -71,6 +78,7 @@ export default function PhoneMockup() {
 
   return (
     <Box
+      ref={phoneRef}
       sx={{
         width: 320,
         height: 680,
