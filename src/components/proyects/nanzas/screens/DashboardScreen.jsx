@@ -102,7 +102,6 @@ function EmptyChart() {
 
 // ─── HOOK: calcular segmentos del período ────────────────────────────────────
 function useChartData(period, transactions) {
-  // ← recibe transactions como parámetro
   return React.useMemo(() => {
     const allCats = JSON.parse(
       localStorage.getItem("nanzas_categories") || "[]"
@@ -112,8 +111,7 @@ function useChartData(period, transactions) {
     const filtered = transactions.filter((tx) => {
       if (!tx.date) return true;
 
-      // Formato yyyy-mm-dd (con guiones)
-      const txDate = new Date(tx.date + "T00:00:00"); // forzar hora local, evitar offset UTC
+      const txDate = new Date(tx.date + "T00:00:00");
 
       if (period === "Day") return txDate.toDateString() === now.toDateString();
       if (period === "Week") {
@@ -143,7 +141,6 @@ function useChartData(period, transactions) {
       grouped[key] = (grouped[key] || 0) + Number(tx.amount);
     });
 
-    // En el hook, al mapear segments, filtrá los que son 0 en amount:
     const segments = Object.entries(grouped)
       .map(([catId, amount], i) => {
         const cat = allCats.find((c) => c.id?.toString() === catId);
@@ -153,19 +150,19 @@ function useChartData(period, transactions) {
           color: cat?.color || AUTO_COLORS[i % AUTO_COLORS.length],
           amount,
           pct: Math.round(pct),
-          pctDisplay: pct > 0 && pct < 1 ? "<1" : String(Math.round(pct)), // ← para mostrar
+          pctDisplay: pct > 0 && pct < 1 ? "<1" : String(Math.round(pct)),
         };
       })
-      .filter((seg) => seg.amount > 0) // ← elimina segmentos vacíos del donut
+      .filter((seg) => seg.amount > 0)
       .sort((a, b) => b.amount - a.amount);
 
     return {
       segments,
       spending: totalSpending,
       income: totalIncome,
-      hasData: transactions.length > 0, // ← usa el total, no solo el período
+      hasData: transactions.length > 0,
     };
-  }, [period, transactions]); // ← transactions como dependencia
+  }, [period, transactions]);
 }
 const isColorDark = (hex) => {
   // Eliminar el '#' si existe
@@ -175,17 +172,13 @@ const isColorDark = (hex) => {
   const g = (rgb >> 8) & 0xff;
   const b = (rgb >> 0) & 0xff;
 
-  // Fórmula de luminancia: (0.299*R + 0.587*G + 0.114*B)
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 
-  // Umbral: 0.5 es el punto medio.
-  // Si es menor a 0.5, es oscuro. Si es mayor, es claro.
   return luminance < 0.7;
 };
 
 // ─── TRANSACTION ROW ──────────────────────────────────────────────────────────
 function TransactionItem({ icon, iconBg, title, sub, amount, onMenuClick }) {
-  // Definimos cuál es el color oscuro de fondo (ajusta este valor al hex exacto que usas para el verde oscuro)
   const isDark = isColorDark(iconBg);
 
   return (
@@ -242,19 +235,22 @@ function DonutChart({ segments, spending, income }) {
   const strokeWidth = 14;
   const circumference = 2 * Math.PI * r;
 
-  // Ordenar menor a mayor para que los chicos se dibujen encima
-  const sorted = [...segments].sort((a, b) => a.amount - b.amount);
   const total = segments.reduce((s, x) => s + x.amount, 0);
 
   let cumPct = 0;
   const arcs = [...segments]
-    .sort((a, b) => b.amount - a.amount) // mayor primero (dibujado abajo)
+    .sort((a, b) => b.amount - a.amount)
     .map((seg) => {
-      const pct = seg.amount / total;
+      const pct = total > 0 ? seg.amount / total : 0;
       const arcLen = pct * circumference;
-      const offset = circumference / 4 - cumPct * circumference; // rotación -90°
+
+      const gap = circumference - arcLen;
+
+      const offset = circumference - cumPct * circumference;
+
       cumPct += pct;
-      return { ...seg, arcLen, offset };
+
+      return { ...seg, arcLen, gap, offset, isFull: pct === 1 };
     });
 
   return (
@@ -278,9 +274,15 @@ function DonutChart({ segments, spending, income }) {
             fill="none"
             stroke={seg.color}
             strokeWidth={strokeWidth}
-            strokeLinecap="round" // ← redondeo nativo SVG
-            strokeDasharray={`${seg.arcLen} ${circumference}`}
-            strokeDashoffset={seg.offset}
+            strokeLinecap="round"
+            // Declaramos la longitud del trazo y la longitud del vacío
+            strokeDasharray={
+              seg.isFull ? undefined : `${seg.arcLen} ${seg.gap}`
+            }
+            // Aplicamos el desfase
+            strokeDashoffset={seg.isFull ? undefined : seg.offset}
+            // Rotamos todos los círculos uniformemente para que empiecen arriba al centro
+            transform="rotate(-90 68 68)"
           />
         ))}
       </svg>
@@ -312,7 +314,6 @@ function DonutChart({ segments, spending, income }) {
     </Box>
   );
 }
-
 // ─── DASHBOARD SCREEN ─────────────────────────────────────────────────────────
 const PERIODS = ["Month", "Week", "Day", "Year", "Period"];
 
@@ -671,36 +672,43 @@ export default function DashboardScreen({ onChange, payments }) {
             More
           </Typography>
         </Box>
-        // 1. DENTRO DE TU MAPEO DE TRANSACCIONES:
-        {lastTransactions.map((tx) => {
-          const cat = allCategories.find(
-            (c) => c.id.toString() === tx.categoryId?.toString()
-          );
-          return (
-            <TransactionItem
-              key={tx.id}
-              icon={
-                cat ? (
-                  <img src={cat.icon} alt={cat.name} width={20} height={20} />
-                ) : (
-                  <CategoryIcon />
-                )
-              }
-              iconBg={cat?.color || colors.primary}
-              title={tx.description}
-              sub={
-                cat?.name ? `${cat.name} • ${tx.date}` : `General • ${tx.date}`
-              }
-              amount={`${tx.type === "expense" ? "-" : "+"}$${tx.amount}`}
-              onMenuClick={(e) => {
-                setMenuAnchor(e.currentTarget); // Establece dónde aparece el menú
-                setMenuTx(tx); // Guarda qué transacción se tocó
-              }}
-            />
-          );
-        })}
-        // 2. FUERA DEL MAPEO, AL FINAL DEL DASHBOARDSCREEN (antes del cierre
-        principal):
+
+        {lastTransactions.length === 0 ? (
+          <p style={{ textAlign: "center", color: "#666", margin: "20px 0" }}>
+            No transactions added.
+          </p>
+        ) : (
+          lastTransactions.map((tx) => {
+            const cat = allCategories.find(
+              (c) => c.id.toString() === tx.categoryId?.toString()
+            );
+            return (
+              <TransactionItem
+                key={tx.id}
+                icon={
+                  cat ? (
+                    <img src={cat.icon} alt={cat.name} width={20} height={20} />
+                  ) : (
+                    <CategoryIcon />
+                  )
+                }
+                iconBg={cat?.color || colors.primary}
+                title={tx.description}
+                sub={
+                  cat?.name
+                    ? `${cat.name} • ${tx.date}`
+                    : `General • ${tx.date}`
+                }
+                amount={`${tx.type === "expense" ? "-" : "+"}$${tx.amount}`}
+                onMenuClick={(e) => {
+                  setMenuAnchor(e.currentTarget); // Establece dónde aparece el menú
+                  setMenuTx(tx); // Guarda qué transacción se tocó
+                }}
+              />
+            );
+          })
+        )}
+
         <Menu
           anchorEl={menuAnchor}
           open={Boolean(menuAnchor)}
