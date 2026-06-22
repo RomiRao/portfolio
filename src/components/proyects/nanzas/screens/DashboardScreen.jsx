@@ -53,6 +53,25 @@ const AUTO_COLORS = [
   "#ffca28",
 ];
 
+const DEFAULT_TRANSACTIONS = [
+  {
+    id: 1782144837492,
+    description: "Salary",
+    amount: 2000,
+    type: "income",
+    categoryId: "1781738044694",
+    date: new Date().toISOString().split("T")[0],
+  },
+  {
+    id: 1782144826849,
+    description: "Rent",
+    amount: 4200,
+    type: "expense",
+    categoryId: "1781738044692",
+    date: new Date().toISOString().split("T")[0],
+  },
+];
+
 // ─── LEGEND ITEM ──────────────────────────────────────────────────────────────
 function LegendItem({ color, label, pct }) {
   return (
@@ -321,13 +340,28 @@ export default function DashboardScreen({ onChange, payments }) {
   const [period, setPeriod] = useState("Month");
   const [menuAnchor, setMenuAnchor] = useState(null);
   const [menuTx, setMenuTx] = useState(null);
-  const [transactions, setTransactions] = useState(() =>
-    JSON.parse(localStorage.getItem("nanzas_transactions") || "[]")
-  );
+  const [transactions, setTransactions] = useState(() => {
+    const savedData = localStorage.getItem("nanzas_transactions");
+
+    if (savedData !== null) {
+      return JSON.parse(savedData);
+    }
+
+    localStorage.setItem(
+      "nanzas_transactions",
+      JSON.stringify(DEFAULT_TRANSACTIONS)
+    );
+    return DEFAULT_TRANSACTIONS;
+  });
   const { segments, spending, income, hasData } = useChartData(
     period,
     transactions
   );
+
+  const totalBalance = transactions.reduce((acc, tx) => {
+    const amount = Number(tx.amount) || 0;
+    return tx.type === "income" ? acc + amount : acc - amount;
+  }, 0);
 
   const lastTransactions = JSON.parse(
     localStorage.getItem("nanzas_transactions") || "[]"
@@ -391,7 +425,8 @@ export default function DashboardScreen({ onChange, payments }) {
           Balance
         </Typography>
         <Typography sx={{ fontSize: 24, fontWeight: 700, color: "#111" }}>
-          $5465
+          {/* 👇 NUEVO: Mostrar la variable dinámica */}$
+          {totalBalance.toLocaleString()}
         </Typography>
       </Box>
 
