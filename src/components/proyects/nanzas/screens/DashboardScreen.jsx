@@ -6,6 +6,7 @@ import {
   IconButton,
   LinearProgress,
   Avatar,
+  Icon,
 } from "@mui/material";
 import {
   Menu,
@@ -30,6 +31,7 @@ import { PieChart } from "react-minimal-pie-chart";
 import TransactionItem from "./TransactionItem";
 
 import transactionIcon from "../../../../assets/icons/transaction-icon.svg";
+import summaryIcon from "../../../../assets/icons/summary-icon.svg";
 import cardIcon from "../../../../assets/icons/card-icon.svg";
 
 const DEFAULT_COLOR = "#2e7d32";
@@ -277,16 +279,14 @@ export default function DashboardScreen({
   payments = [],
   phoneContainerRef,
 }) {
-  // Creamos la referencia que apuntará al contenedor "mockup" del dashboard
   const containerRef = React.useRef(null);
 
   const [period, setPeriod] = useState("Month");
 
-  // Estados de control de Fechas dinámicas
   const [refDate, setRefDate] = useState(new Date());
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
-  const [openDatePicker, setOpenDatePicker] = useState(false); // Modal general unificado
+  const [openDatePicker, setOpenDatePicker] = useState(false);
 
   const [menuAnchor, setMenuAnchor] = useState(null);
   const [menuTx, setMenuTx] = useState(null);
@@ -413,6 +413,33 @@ export default function DashboardScreen({
               setRefDate(d);
             }
           }}
+          sx={{
+            mt: 1.5,
+
+            "& .MuiInputBase-input": {
+              py: 1.5,
+              color: colors.black,
+            },
+
+            "& .MuiInputLabel-root": {
+              color: colors.gray,
+            },
+            "& .MuiInputLabel-root.Mui-focused": {
+              color: colors.primary,
+            },
+
+            "& .MuiOutlinedInput-root": {
+              "& fieldset": {
+                borderColor: colors.gray,
+              },
+              "&:hover fieldset": {
+                borderColor: "darkgray",
+              },
+              "&.Mui-focused fieldset": {
+                borderColor: colors.primary,
+              },
+            },
+          }}
         />
       );
     }
@@ -428,6 +455,33 @@ export default function DashboardScreen({
             if (e.target.value) {
               setRefDate(new Date(e.target.value + "T00:00:00"));
             }
+          }}
+          sx={{
+            mt: 1.5,
+
+            "& .MuiInputBase-input": {
+              py: 1.5,
+              color: colors.black,
+            },
+
+            "& .MuiInputLabel-root": {
+              color: colors.gray,
+            },
+            "& .MuiInputLabel-root.Mui-focused": {
+              color: colors.primary,
+            },
+
+            "& .MuiOutlinedInput-root": {
+              "& fieldset": {
+                borderColor: colors.gray,
+              },
+              "&:hover fieldset": {
+                borderColor: "darkgray",
+              },
+              "&.Mui-focused fieldset": {
+                borderColor: colors.primary,
+              },
+            },
           }}
         />
       );
@@ -447,12 +501,41 @@ export default function DashboardScreen({
               setRefDate(d);
             }
           }}
+          sx={{
+            mt: 1.5,
+
+            "& .MuiInputBase-input": {
+              py: 1.5,
+              color: colors.black,
+            },
+
+            "& .MuiInputLabel-root": {
+              color: colors.gray,
+            },
+            "& .MuiInputLabel-root.Mui-focused": {
+              color: colors.primary,
+            },
+
+            "& .MuiOutlinedInput-root": {
+              "& fieldset": {
+                borderColor: colors.gray,
+              },
+              "&:hover fieldset": {
+                borderColor: "darkgray",
+              },
+              "&.Mui-focused fieldset": {
+                borderColor: colors.primary,
+              },
+            },
+          }}
         />
       );
     }
     if (period === "Period") {
       return (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+        <Box
+          sx={{ display: "flex", flexDirection: "column", gap: 2.5, mt: 1.5 }}
+        >
           <TextField
             type="date"
             label="Start Date"
@@ -460,6 +543,33 @@ export default function DashboardScreen({
             InputLabelProps={{ shrink: true }}
             value={customStart}
             onChange={(e) => setCustomStart(e.target.value)}
+            sx={{
+              mt: 1.5,
+
+              "& .MuiInputBase-input": {
+                py: 1.5,
+                color: colors.black,
+              },
+
+              "& .MuiInputLabel-root": {
+                color: colors.gray,
+              },
+              "& .MuiInputLabel-root.Mui-focused": {
+                color: colors.primary,
+              },
+
+              "& .MuiOutlinedInput-root": {
+                "& fieldset": {
+                  borderColor: colors.gray,
+                },
+                "&:hover fieldset": {
+                  borderColor: "darkgray",
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: colors.primary,
+                },
+              },
+            }}
           />
           <TextField
             type="date"
@@ -468,6 +578,33 @@ export default function DashboardScreen({
             InputLabelProps={{ shrink: true }}
             value={customEnd}
             onChange={(e) => setCustomEnd(e.target.value)}
+            sx={{
+              mt: 1.5,
+
+              "& .MuiInputBase-input": {
+                py: 1.5,
+                color: colors.black,
+              },
+
+              "& .MuiInputLabel-root": {
+                color: colors.gray,
+              },
+              "& .MuiInputLabel-root.Mui-focused": {
+                color: colors.primary,
+              },
+
+              "& .MuiOutlinedInput-root": {
+                "& fieldset": {
+                  borderColor: colors.gray,
+                },
+                "&:hover fieldset": {
+                  borderColor: "darkgray",
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: colors.primary,
+                },
+              },
+            }}
           />
         </Box>
       );
@@ -480,22 +617,29 @@ export default function DashboardScreen({
       sx={{
         flex: 1,
         overflowY: "auto",
-        bgcolor: colors.bgGreen,
-        px: 2,
-        pt: 1.5,
+        display: "flex",
+        flexDirection: "column",
+        gap: 1,
+        px: 1.5,
         pb: 1,
-
         "&::-webkit-scrollbar": { display: "none" },
         msOverflowStyle: "none",
         scrollbarWidth: "none",
       }}
     >
       {/* ── Balance ── */}
-      <Box sx={{ display: "flex", alignItems: "baseline", gap: 1, mb: 2 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "baseline",
+          gap: 1,
+        }}
+      >
         <Typography sx={{ fontSize: 24, fontWeight: 700, color: "#2e7d32" }}>
           Balance
         </Typography>
-        <Typography sx={{ fontSize: 24, fontWeight: 700, color: "#111" }}>
+        <Typography sx={{ fontSize: 20, fontWeight: 500, color: "#111" }}>
           ${totalBalance.toLocaleString()}
         </Typography>
       </Box>
@@ -506,30 +650,58 @@ export default function DashboardScreen({
           bgcolor: "#fff",
           borderRadius: 3,
           p: 1.8,
-          mb: 1.8,
+          display: "flex",
+          flexDirection: "column",
+          gap: 1,
           boxShadow: "0 1px 6px rgba(0,0,0,0.06)",
         }}
       >
         {/* Period tabs */}
-        <Box sx={{ display: "flex", gap: 0.4, mb: 1.5, flexWrap: "wrap" }}>
-          {PERIODS.map((p) => (
-            <Chip
-              key={p}
-              label={p}
-              onClick={() => setPeriod(p)}
-              size="small"
-              sx={{
-                fontSize: 11,
-                height: 26,
-                bgcolor: period === p ? "#1a1a1a" : "transparent",
-                color: period === p ? "#fff" : "#888",
-                border: period === p ? "none" : "1px solid #e0e0e0",
-                fontWeight: period === p ? 700 : 400,
-                cursor: "pointer",
-                "& .MuiChip-label": { px: 1 },
-              }}
-            />
-          ))}
+        <Box
+          sx={{
+            display: "flex",
+            gap: 0.2,
+
+            flexWrap: "wrap",
+            backgroundColor: colors.bgLightGreen,
+            borderRadius: 1,
+            p: 0.5,
+          }}
+        >
+          {PERIODS.map((p) => {
+            const isSelected = period === p;
+
+            return (
+              <Chip
+                key={p}
+                label={p}
+                onClick={() => setPeriod(p)}
+                size="small"
+                sx={{
+                  fontSize: 11,
+                  height: 26,
+                  backgroundColor: isSelected ? colors.surface : "transparent",
+                  color: colors.black,
+                  borderRadius: 1,
+                  py: 0.1,
+                  fontWeight: isSelected ? 700 : 400,
+                  cursor: "pointer",
+
+                  "&:hover": {
+                    backgroundColor: isSelected
+                      ? colors.surface
+                      : "rgba(0, 0, 0, 0.04)",
+                  },
+
+                  "&:focus, &:active, &.MuiChip-clickable:focus": {
+                    backgroundColor: isSelected
+                      ? colors.surface
+                      : "transparent",
+                  },
+                }}
+              />
+            );
+          })}
         </Box>
 
         {/* Date row unificado e interactivo mediante Calendario */}
@@ -538,57 +710,51 @@ export default function DashboardScreen({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            mb: 1.2,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.2 }}>
-            {period !== "Period" && (
-              <IconButton size="small" onClick={handlePrev} sx={{ p: 0.2 }}>
-                <ChevronLeft sx={{ fontSize: 18, color: "#666" }} />
-              </IconButton>
-            )}
-
-            {/* Toda esta zona (Texto + Icono) ahora abre el modal correspondiente */}
-            <Box
-              onClick={() => setOpenDatePicker(true)}
+          {/* Toda esta zona (Texto + Icono) ahora abre el modal correspondiente */}
+          <Box
+            onClick={() => setOpenDatePicker(true)}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 0.8,
+              cursor: "pointer",
+              px: 0.5,
+              borderRadius: "6px",
+              "&:hover": { bgcolor: "#f5f5f5" },
+            }}
+          >
+            <Typography
               sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 0.8,
-                cursor: "pointer",
-                px: 0.5,
-                borderRadius: "6px",
-                "&:hover": { bgcolor: "#f5f5f5" },
+                fontSize: period === "Week" || period === "Period" ? 10 : 13,
+                fontWeight: 500,
+                color: "#222",
               }}
             >
-              <Typography sx={{ fontSize: 13, fontWeight: 500, color: "#222" }}>
-                {getPeriodLabel()}
-              </Typography>
-              <CalendarToday sx={{ fontSize: 15, color: "#2e7d32" }} />
-            </Box>
-
-            {period !== "Period" && (
-              <IconButton size="small" onClick={handleNext} sx={{ p: 0.2 }}>
-                <ChevronRight sx={{ fontSize: 18, color: "#666" }} />
-              </IconButton>
-            )}
+              {getPeriodLabel()}
+            </Typography>
+            <CalendarToday sx={{ fontSize: 15, color: "#2e7d32" }} />
           </Box>
 
-          <Chip
-            icon={<BarChart sx={{ fontSize: 15, color: "#fff !important" }} />}
-            label="Summary"
-            onClick={() => onChange("summary")} // <── Agregamos esto para navegar
+          <Button
+            onClick={() => onChange("summary")}
             sx={{
-              bgcolor: "#2e7d32",
-              color: "#fff",
+              bgcolor: colors.bgLightGreen,
+              color: colors.primary,
               fontWeight: 600,
               fontSize: 11,
               height: 28,
               cursor: "pointer",
               "& .MuiChip-label": { pl: 0.3 },
-              "&:hover": { bgcolor: "#1b5e20" },
+              px: 1,
+              textTransform: "none",
+              gap: 1,
             }}
-          />
+          >
+            <img src={summaryIcon} alt="transaction" width={24} height={24} />
+            Summary
+          </Button>
         </Box>
 
         {/* Donut + legend */}
@@ -625,20 +791,20 @@ export default function DashboardScreen({
       </Box>
 
       {/* Botones de acción rápido */}
-      <Box sx={{ display: "flex", width: "100%", gap: 2, mb: 1.8 }}>
+      <Box sx={{ display: "flex", width: "100%", gap: 1 }}>
         <Box
           onClick={() => onChange("newtransaction")}
           sx={{
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            justifyContent: "space-between",
+            justifyContent: "center",
             cursor: "pointer",
             bgcolor: "#fff",
             borderRadius: 3,
             py: 1,
-            px: 2,
-            gap: 1,
+            px: 1,
+            gap: 0.5,
             boxShadow: "0 1px 6px rgba(0,0,0,0.06)",
             width: "100%",
           }}
@@ -647,7 +813,7 @@ export default function DashboardScreen({
           <Typography
             variant="body2"
             fontWeight={500}
-            sx={{ color: colors.primary, fontSize: "12px" }}
+            sx={{ color: colors.black, fontSize: "12px" }}
           >
             New Transaction
           </Typography>
@@ -657,12 +823,13 @@ export default function DashboardScreen({
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            justifyContent: "space-between",
+            justifyContent: "center",
+            cursor: "pointer",
             bgcolor: "#fff",
             borderRadius: 3,
             py: 1,
             px: 1,
-            gap: 1,
+            gap: 0.5,
             boxShadow: "0 1px 6px rgba(0,0,0,0.06)",
             width: "100%",
           }}
@@ -671,7 +838,7 @@ export default function DashboardScreen({
           <Typography
             variant="body2"
             fontWeight={500}
-            sx={{ color: colors.primary, fontSize: "12px" }}
+            sx={{ color: colors.black, fontSize: "12px" }}
           >
             New Card Expense
           </Typography>
@@ -686,14 +853,19 @@ export default function DashboardScreen({
           justifyContent: "space-between",
           bgcolor: "#fff",
           borderRadius: 3,
-          p: 1.8,
-          mb: 1.8,
+          py: 1,
+          px: 1.7,
+
           gap: 2,
           boxShadow: "0 1px 6px rgba(0,0,0,0.06)",
         }}
       >
-        <Box sx={{ flex: "1" }}>
-          <Typography sx={{ fontSize: 15, fontWeight: 600, color: "#111" }}>
+        <Box
+          sx={{ flex: "1", display: "flex", flexDirection: "column", gap: 0.7 }}
+        >
+          <Typography
+            sx={{ fontSize: 15, fontWeight: 600, color: colors.gray }}
+          >
             Payment list
           </Typography>
           <LinearProgress
@@ -702,10 +874,10 @@ export default function DashboardScreen({
             sx={{
               height: 5,
               borderRadius: 3,
-              mb: 0.8,
+
               bgcolor: "#e0e0e0",
               "& .MuiLinearProgress-bar": {
-                bgcolor: "#2e7d32",
+                bgcolor: colors.primary,
                 borderRadius: 3,
               },
             }}
@@ -713,7 +885,7 @@ export default function DashboardScreen({
           <Typography
             sx={{
               fontSize: 11,
-              color: paidCount === payments.length ? "#2e7d32" : "#999",
+              color: colors.black,
               fontWeight: paidCount === payments.length ? 600 : 400,
             }}
           >
@@ -728,14 +900,14 @@ export default function DashboardScreen({
           size="small"
           onClick={() => onChange("paymentlist")}
           sx={{
-            bgcolor: "#2e7d32",
+            bgcolor: colors.primary,
             color: "#fff",
             width: 32,
             height: 32,
             "&:hover": { bgcolor: "#1b5e20" },
           }}
         >
-          <ChevronRight sx={{ fontSize: 20 }} />
+          <ChevronRight sx={{ fontSize: 26 }} />
         </IconButton>
       </Box>
 
@@ -757,7 +929,9 @@ export default function DashboardScreen({
             mb: 0.5,
           }}
         >
-          <Typography sx={{ fontSize: 15, fontWeight: 600, color: "#111" }}>
+          <Typography
+            sx={{ fontSize: 15, fontWeight: 600, color: colors.gray }}
+          >
             Last transactions
           </Typography>
           <Typography
@@ -870,16 +1044,16 @@ export default function DashboardScreen({
         >
           Select Filter ({period})
         </DialogTitle>
-        <DialogContent sx={{ pt: 2, minWidth: 260 }}>
-          <Box sx={{ colorScheme: "light", pt: 1 }}>{renderPickerInput()}</Box>
+        <DialogContent>
+          <Box sx={{ colorScheme: "light" }}>{renderPickerInput()}</Box>
         </DialogContent>
         <DialogActions sx={{ pb: 2, pr: 3 }}>
           <Button
             onClick={() => setOpenDatePicker(false)}
             variant="contained"
             sx={{
-              bgcolor: "#2e7d32",
-              "&:hover": { bgcolor: "#1b5e20" },
+              bgcolor: colors.primary,
+              color: colors.surface,
               borderRadius: 2,
               textTransform: "none",
             }}

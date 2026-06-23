@@ -1,20 +1,23 @@
 import { useState } from "react";
 import { Box, Typography } from "@mui/material";
-import { Home, CreditCard, Add, GridView, Settings } from "@mui/icons-material";
-import { colors } from "./colors.js";
+
+import homeIcon from "../../../assets/icons/home-icon.svg";
+import cardIcon from "../../../assets/icons/cardnormal-icon.svg";
+import categoryIcon from "../../../assets/icons/category-icon.svg";
+import settingsIcon from "../../../assets/icons/settings-icon.svg";
+import { colors } from "../nanzas/colors";
 
 const NAV_ITEMS = [
-  { id: "dashboard", icon: <Home />, label: "Home" },
-  { id: "cards", icon: <CreditCard />, label: "Cards" },
-
-  { id: "categories", icon: <GridView />, label: "Categories" },
-  { id: "settings", icon: <Settings />, label: "Settings" },
+  { id: "dashboard", iconUrl: homeIcon, label: "Home" },
+  { id: "cards", iconUrl: cardIcon, label: "Cards" },
+  { id: "categories", iconUrl: categoryIcon, label: "Categories" },
+  { id: "settings", iconUrl: settingsIcon, label: "Settings" },
 ];
 
 export default function BottomNavBar({ active: activeProp, onChange }) {
-  const [internalActive, setInternalActive] = useState("home");
-
+  const [internalActive, setInternalActive] = useState("dashboard");
   const active = activeProp ?? internalActive;
+
   const handleChange = (id) => {
     if (!activeProp) setInternalActive(id);
     onChange?.(id);
@@ -34,30 +37,8 @@ export default function BottomNavBar({ active: activeProp, onChange }) {
       }}
     >
       {NAV_ITEMS.map((item) => {
-        if (item.id === "add") {
-          return (
-            <Box
-              key="add"
-              onClick={() => handleChange("add")}
-              sx={{
-                width: 52,
-                height: 52,
-                borderRadius: "50%",
-                bgcolor: colors.primary,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                boxShadow: "0 4px 12px rgba(46,125,50,0.4)",
-                mt: -2.5,
-              }}
-            >
-              <Add sx={{ color: "#fff", fontSize: 28 }} />
-            </Box>
-          );
-        }
-
         const isActive = active === item.id;
+
         return (
           <Box
             key={item.id}
@@ -68,12 +49,28 @@ export default function BottomNavBar({ active: activeProp, onChange }) {
               alignItems: "center",
               cursor: "pointer",
               minWidth: 44,
-              color: isActive ? colors.primary : colors.textMuted,
+              transition: "all 0.2s",
             }}
           >
-            <Box sx={{ fontSize: 22 }}>{item.icon}</Box>
+            <img
+              src={item.iconUrl}
+              alt={item.label}
+              style={{
+                width: 24,
+                height: 24,
+
+                filter: isActive
+                  ? "none"
+                  : `brightness(0%) saturate(100%) invert(50%) sepia(15%) hue-rotate(180deg)`,
+              }}
+            />
             <Typography
-              sx={{ fontSize: 10, mt: 0.2, fontWeight: isActive ? 700 : 400 }}
+              sx={{
+                fontSize: 10,
+                mt: 0.2,
+                fontWeight: isActive ? 700 : 400,
+                color: isActive ? colors.primary : colors.gray,
+              }}
             >
               {item.label}
             </Typography>
