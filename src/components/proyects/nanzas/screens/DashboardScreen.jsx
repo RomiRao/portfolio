@@ -117,7 +117,7 @@ function EmptyChart() {
 function useChartData(period, transactions, refDate, customStart, customEnd) {
   return React.useMemo(() => {
     const allCats = JSON.parse(
-      localStorage.getItem("nanzas_categories") || "[]"
+      localStorage.getItem("nanzas_categories") || "[]",
     );
 
     const filtered = transactions.filter((tx) => {
@@ -272,7 +272,14 @@ function DonutChart({ segments, spending, income }) {
 // ─── DASHBOARD SCREEN ─────────────────────────────────────────────────────────
 const PERIODS = ["Month", "Week", "Day", "Year", "Period"];
 
-export default function DashboardScreen({ onChange, payments = [] }) {
+export default function DashboardScreen({
+  onChange,
+  payments = [],
+  phoneContainerRef,
+}) {
+  // Creamos la referencia que apuntará al contenedor "mockup" del dashboard
+  const containerRef = React.useRef(null);
+
   const [period, setPeriod] = useState("Month");
 
   // Estados de control de Fechas dinámicas
@@ -291,7 +298,7 @@ export default function DashboardScreen({ onChange, payments = [] }) {
     if (savedData !== null) return JSON.parse(savedData);
     localStorage.setItem(
       "nanzas_transactions",
-      JSON.stringify(DEFAULT_TRANSACTIONS)
+      JSON.stringify(DEFAULT_TRANSACTIONS),
     );
     return DEFAULT_TRANSACTIONS;
   });
@@ -301,7 +308,7 @@ export default function DashboardScreen({ onChange, payments = [] }) {
     transactions,
     refDate,
     customStart,
-    customEnd
+    customEnd,
   );
 
   // Navegación secuencial por flechas (Día, Semana, Mes, Año)
@@ -367,7 +374,7 @@ export default function DashboardScreen({ onChange, payments = [] }) {
 
   const lastTransactions = transactions.slice(0, 5);
   const allCategories = JSON.parse(
-    localStorage.getItem("nanzas_categories") || "[]"
+    localStorage.getItem("nanzas_categories") || "[]",
   );
 
   const TOTAL = payments.reduce((s, p) => s + p.amount, 0);
@@ -389,7 +396,7 @@ export default function DashboardScreen({ onChange, payments = [] }) {
   const renderPickerInput = () => {
     if (period === "Month") {
       const currentMonthStr = `${refDate.getFullYear()}-${String(
-        refDate.getMonth() + 1
+        refDate.getMonth() + 1,
       ).padStart(2, "0")}`;
       return (
         <TextField
@@ -477,6 +484,7 @@ export default function DashboardScreen({ onChange, payments = [] }) {
         px: 2,
         pt: 1.5,
         pb: 1,
+
         "&::-webkit-scrollbar": { display: "none" },
         msOverflowStyle: "none",
         scrollbarWidth: "none",
@@ -772,7 +780,7 @@ export default function DashboardScreen({ onChange, payments = [] }) {
         ) : (
           lastTransactions.map((tx) => {
             const cat = allCategories.find(
-              (c) => c.id.toString() === tx.categoryId?.toString()
+              (c) => c.id.toString() === tx.categoryId?.toString(),
             );
             return (
               <TransactionItem
@@ -841,13 +849,19 @@ export default function DashboardScreen({ onChange, payments = [] }) {
       <Dialog
         open={openDatePicker}
         onClose={() => setOpenDatePicker(false)}
-        // Forzamos las propiedades del contenedor del modal
+        container={() => phoneContainerRef.current}
+        sx={{ position: "absolute" }}
+        slotProps={{
+          backdrop: {
+            sx: { position: "absolute" },
+          },
+        }}
         PaperProps={{
           sx: {
             borderRadius: 3,
             p: 1,
-            bgcolor: "#ffffff", // <── Fuerza el fondo blanco sólido
-            backgroundImage: "none", // <── Elimina gradientes molestos de MUI en modo oscuro
+            bgcolor: "#ffffff",
+            backgroundImage: "none",
           },
         }}
       >
@@ -857,7 +871,6 @@ export default function DashboardScreen({ onChange, payments = [] }) {
           Select Filter ({period})
         </DialogTitle>
         <DialogContent sx={{ pt: 2, minWidth: 260 }}>
-          {/* Box contenedor para asegurar que los inputs nativos rendericen su calendario con fondo correcto */}
           <Box sx={{ colorScheme: "light", pt: 1 }}>{renderPickerInput()}</Box>
         </DialogContent>
         <DialogActions sx={{ pb: 2, pr: 3 }}>

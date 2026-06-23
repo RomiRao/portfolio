@@ -42,7 +42,11 @@ export default function PhoneMockup() {
   };
   const screens = {
     dashboard: (
-      <DashboardScreen payments={payments} onChange={handleNavigation} />
+      <DashboardScreen
+        payments={payments}
+        onChange={handleNavigation}
+        phoneContainerRef={phoneRef}
+      />
     ),
     paymentlist: (
       <PaymentListScreen
@@ -62,7 +66,7 @@ export default function PhoneMockup() {
       <CategoriesScreen onBack={() => setCurrentScreen("dashboard")} />
     ),
     summary: <SummaryScreen onChange={handleNavigation} />,
-    // 2. ← Añadimos 'history' a las pantallas disponibles
+
     history: (
       <HistoryScreen
         onBack={() => setCurrentScreen("dashboard")}
