@@ -140,7 +140,7 @@ export default function CategoriesScreen({ phoneContainerRef }) {
         }}
       >
         <Typography
-          sx={{ fontSize: 20, fontWeight: 700, color: colors.primary }}
+          sx={{ fontSize: 26, fontWeight: 600, color: colors.primary }}
         >
           Categories
         </Typography>
@@ -201,7 +201,7 @@ export default function CategoriesScreen({ phoneContainerRef }) {
             <span
               style={{
                 fontWeight: 500,
-                fontSize: "15px",
+                fontSize: 12,
                 color: tab === key ? colors.surface : colors.primary,
                 transition: "color 0.15s ease",
               }}

@@ -86,6 +86,9 @@ export default function NewCategoryModal({ onClose, onSave, initialData }) {
           borderRadius: "20px 20px 0 0",
           p: 2.5,
           pb: 3,
+          display: "flex",
+          flexDirection: "column",
+          gap: 1.5,
         }}
       >
         <Typography
@@ -143,7 +146,7 @@ export default function NewCategoryModal({ onClose, onSave, initialData }) {
               <span
                 style={{
                   fontWeight: 500,
-                  fontSize: "15px",
+                  fontSize: "16px",
                   color: tab === key ? colors.surface : colors.primary,
                   transition: "color 0.15s ease",
                 }}
@@ -155,9 +158,7 @@ export default function NewCategoryModal({ onClose, onSave, initialData }) {
         </Box>
 
         {/* Name */}
-        <Typography sx={{ fontSize: 12, color: "#555", mb: 0.6 }}>
-          Name
-        </Typography>
+        <Typography sx={{ fontSize: 12, color: "#555" }}>Name</Typography>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -168,17 +169,15 @@ export default function NewCategoryModal({ onClose, onSave, initialData }) {
             borderRadius: 10,
             fontSize: 14,
             outline: "none",
-            marginBottom: 16,
+
             boxSizing: "border-box",
             fontFamily: "inherit",
           }}
         />
 
         {/* Icon picker */}
-        <Typography sx={{ fontSize: 12, color: "#555", mb: 0.8 }}>
-          Icon
-        </Typography>
-        <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", mb: 2 }}>
+        <Typography sx={{ fontSize: 12, color: "#555" }}>Icon</Typography>
+        <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
           {ICONS.map((ic) => (
             <Box
               key={ic.name}
@@ -216,7 +215,7 @@ export default function NewCategoryModal({ onClose, onSave, initialData }) {
         <Typography sx={{ fontSize: 12, color: "#555", mb: 0.8 }}>
           Color
         </Typography>
-        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2.5 }}>
+        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
           {CATEGORY_COLORS.map((c) => (
             <Box
               key={c}
@@ -246,14 +245,14 @@ export default function NewCategoryModal({ onClose, onSave, initialData }) {
           <Box
             onClick={onClose}
             sx={{
-              py: 1,
+              py: 0.9,
               px: 2,
               textAlign: "center",
               borderRadius: 2,
               cursor: "pointer",
               bgcolor: colors.bgGreen,
 
-              fontSize: "14px",
+              fontSize: 13,
               fontWeight: 600,
               color: colors.primary,
             }}
@@ -263,13 +262,13 @@ export default function NewCategoryModal({ onClose, onSave, initialData }) {
           <Box
             onClick={handleSave}
             sx={{
-              py: 1,
+              py: 0.9,
               px: 2,
               textAlign: "center",
               borderRadius: 2,
               cursor: "pointer",
               bgcolor: colors.primary,
-              fontSize: "14px",
+              fontSize: 13,
               fontWeight: 600,
               color: "#fff",
               border: "none",

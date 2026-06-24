@@ -18,9 +18,9 @@ const fieldSx = {
   width: "100%",
   padding: "10px 12px",
   border: "1px solid #d0d0d0",
-  borderRadius: "10px",
+  borderRadius: 1.3,
   background: "#fff",
-  fontSize: "14px",
+  fontSize: 12,
   color: "#1a1a1a",
   outline: "none",
   fontFamily: "inherit",
@@ -194,7 +194,7 @@ export default function NewTransactionScreen({ onBack, params }) {
         sx={{
           display: "flex",
           bgcolor: colors.light,
-          borderRadius: "8px",
+          borderRadius: 1.3,
           overflow: "hidden",
         }}
       >
@@ -232,7 +232,7 @@ export default function NewTransactionScreen({ onBack, params }) {
             <span
               style={{
                 fontWeight: 500,
-                fontSize: "15px",
+                fontSize: 12,
                 color: tab === key ? colors.surface : colors.primary,
                 transition: "color 0.15s ease",
               }}
@@ -256,7 +256,7 @@ export default function NewTransactionScreen({ onBack, params }) {
             displayEmpty
             sx={{
               backgroundColor: "#fff",
-              borderRadius: "10px",
+              borderRadius: 1.3,
               "& .MuiOutlinedInput-notchedOutline": { borderColor: "#d0d0d0" },
               "&:hover .MuiOutlinedInput-notchedOutline": {
                 borderColor: "#a0a0a0",
@@ -276,7 +276,7 @@ export default function NewTransactionScreen({ onBack, params }) {
             MenuProps={{
               PaperProps: {
                 sx: {
-                  borderRadius: "12px",
+                  borderRadius: 1.3,
                   mt: 0.5,
                   boxShadow: "0px 4px 20px rgba(0,0,0,0.15)",
                   bgcolor: "#fff",
@@ -387,14 +387,14 @@ export default function NewTransactionScreen({ onBack, params }) {
         <Box
           onClick={handleCancel}
           sx={{
-            py: 1,
+            py: 0.9,
             px: 2,
             textAlign: "center",
-            borderRadius: 2,
+            borderRadius: 1.3,
             cursor: "pointer",
             bgcolor: colors.bgGreen,
 
-            fontSize: "14px",
+            fontSize: 12,
             fontWeight: 600,
             color: colors.primary,
           }}
@@ -405,13 +405,13 @@ export default function NewTransactionScreen({ onBack, params }) {
           component="button"
           type="submit"
           sx={{
-            py: 1,
+            py: 0.9,
             px: 2,
             textAlign: "center",
-            borderRadius: 2,
+            borderRadius: 1.3,
             cursor: "pointer",
             bgcolor: colors.primary,
-            fontSize: "14px",
+            fontSize: 12,
             fontWeight: 600,
             color: "#fff",
             border: "none",
@@ -436,7 +436,7 @@ export default function NewTransactionScreen({ onBack, params }) {
             color: "#fff",
             px: 2,
             py: 1,
-            borderRadius: 2,
+            borderRadius: 1.3,
             fontSize: 12,
             whiteSpace: "nowrap",
             zIndex: 99,
