@@ -352,7 +352,7 @@ export default function DashboardScreen({
       return `${start.toLocaleDateString()} - ${end.toLocaleDateString()}`;
     }
     if (period === "Period") {
-      if (customStart && customEnd) return `${customStart} to ${customEnd}`;
+      if (customStart && customEnd) return `${customStart} - ${customEnd}`;
       return "Select custom period";
     }
     return "";
