@@ -11,6 +11,7 @@ import {
 import { MoreVert, Add } from "@mui/icons-material";
 import { colors } from "../../nanzas/colors";
 import NewCategoryModal, { STORAGE_KEY } from "./modals/AddCategoryModal";
+import { createPortal } from "react-dom";
 
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 
@@ -33,7 +34,7 @@ function isCategoryInUse(categoryId) {
   return transactions.some((t) => String(t.categoryId) === String(categoryId));
 }
 
-export default function CategoriesScreen() {
+export default function CategoriesScreen({ phoneContainerRef }) {
   const [tab, setTab] = useState("expense");
   const DEFAULT_CATEGORIES = [
     {
@@ -63,7 +64,6 @@ export default function CategoriesScreen() {
     }
   });
 
-  console.log("categorias", categories);
   const [showModal, setShowModal] = useState(false);
   const [editingCat, setEditingCat] = useState(null);
   const [menuAnchor, setMenuAnchor] = useState(null);
@@ -312,16 +312,19 @@ export default function CategoriesScreen() {
       </Menu>
 
       {/* Modal */}
-      {showModal && (
-        <NewCategoryModal
-          onClose={() => {
-            setShowModal(false);
-            setEditingCat(null);
-          }}
-          onSave={handleSave}
-          initialData={editingCat}
-        />
-      )}
+      {showModal &&
+        phoneContainerRef?.current &&
+        createPortal(
+          <NewCategoryModal
+            onClose={() => {
+              setShowModal(false);
+              setEditingCat(null);
+            }}
+            onSave={handleSave}
+            initialData={editingCat}
+          />,
+          phoneContainerRef.current,
+        )}
       <Snackbar
         open={Boolean(snackbarMsg)}
         autoHideDuration={2500}

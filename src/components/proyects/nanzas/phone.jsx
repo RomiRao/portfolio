@@ -64,7 +64,10 @@ export default function PhoneMockup() {
       />
     ),
     categories: (
-      <CategoriesScreen onBack={() => setCurrentScreen("dashboard")} />
+      <CategoriesScreen
+        onBack={() => setCurrentScreen("dashboard")}
+        phoneContainerRef={phoneRef}
+      />
     ),
     summary: <SummaryScreen onChange={handleNavigation} />,
 

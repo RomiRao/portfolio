@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Box, Typography } from "@mui/material";
 import { colors } from "../../colors";
+import downIcon from "../../../../../assets/icons/down-icon.svg";
+import upIcon from "../../../../../assets/icons/up-icon.svg";
 
 const iconModules = import.meta.glob("../../../../../assets/icons/*.svg", {
   eager: true,
@@ -33,7 +35,7 @@ export default function NewCategoryModal({ onClose, onSave, initialData }) {
   const [name, setName] = useState(initialData?.name || "");
   const [icon, setIcon] = useState(initialData?.icon || ICONS[0]?.url || "");
   const [iconName, setIconName] = useState(
-    initialData?.iconName || ICONS[0]?.name || ""
+    initialData?.iconName || ICONS[0]?.name || "",
   );
   const [color, setColor] = useState(initialData?.color || CATEGORY_COLORS[0]);
 
@@ -47,7 +49,7 @@ export default function NewCategoryModal({ onClose, onSave, initialData }) {
       const updated = existing.map((c) =>
         c.id === initialData.id
           ? { ...c, type: tab, name: name.trim(), icon, iconName, color }
-          : c
+          : c,
       );
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     } else {
@@ -71,7 +73,7 @@ export default function NewCategoryModal({ onClose, onSave, initialData }) {
       sx={{
         position: "absolute",
         inset: 0,
-        zIndex: 50,
+        zIndex: 100,
         display: "flex",
         alignItems: "flex-end",
         bgcolor: "rgba(0,0,0,0.35)",
@@ -91,7 +93,7 @@ export default function NewCategoryModal({ onClose, onSave, initialData }) {
             fontSize: 15,
             fontWeight: 600,
             textAlign: "center",
-            color: "#111",
+            color: colors.gray,
             mb: 1.8,
           }}
         >
@@ -102,30 +104,52 @@ export default function NewCategoryModal({ onClose, onSave, initialData }) {
         <Box
           sx={{
             display: "flex",
-            bgcolor: "#c8d9b0",
-            borderRadius: "10px",
-            p: "4px",
-            gap: "4px",
-            mb: 2,
+            bgcolor: colors.light,
+            borderRadius: "8px",
+            overflow: "hidden",
           }}
         >
-          {["expense", "income"].map((t) => (
+          {[
+            { key: "expense", label: "Expense", icon: downIcon },
+            { key: "income", label: "Income", icon: upIcon },
+          ].map(({ key, label, icon }) => (
             <Box
-              key={t}
-              onClick={() => setTab(t)}
+              key={key}
+              onClick={() => setTab(key)}
               sx={{
                 flex: 1,
-                textAlign: "center",
-                py: "8px",
-                borderRadius: "8px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                py: 1,
+                px: 3,
+
                 cursor: "pointer",
-                fontSize: 13,
-                fontWeight: 500,
-                bgcolor: tab === t ? colors.primary : "transparent",
-                color: tab === t ? "#fff" : "#3a5a1c",
+                bgcolor: tab === key ? colors.primary : colors.bgGreen,
+                transition: "all 0.15s ease",
               }}
             >
-              {t === "expense" ? "↓ Expense" : "↑ Income"}
+              <img
+                src={icon}
+                alt={label}
+                style={{
+                  width: "18px",
+                  height: "18px",
+                  filter: tab === key ? "brightness(0) invert(1)" : "none",
+                  transition: "filter 0.15s ease",
+                }}
+              />
+              <span
+                style={{
+                  fontWeight: 500,
+                  fontSize: "15px",
+                  color: tab === key ? colors.surface : colors.primary,
+                  transition: "color 0.15s ease",
+                }}
+              >
+                {label}
+              </span>
             </Box>
           ))}
         </Box>
@@ -211,19 +235,27 @@ export default function NewCategoryModal({ onClose, onSave, initialData }) {
         </Box>
 
         {/* Buttons */}
-        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5 }}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 1,
+            mt: 1,
+          }}
+        >
           <Box
             onClick={onClose}
             sx={{
-              py: "12px",
+              py: 1,
+              px: 2,
               textAlign: "center",
-              borderRadius: "12px",
+              borderRadius: 2,
               cursor: "pointer",
-              bgcolor: "#e8e8e8",
-              border: "1px solid #ccc",
-              fontSize: 14,
-              fontWeight: 500,
-              color: "#555",
+              bgcolor: colors.bgGreen,
+
+              fontSize: "14px",
+              fontWeight: 600,
+              color: colors.primary,
             }}
           >
             Cancel
@@ -231,14 +263,19 @@ export default function NewCategoryModal({ onClose, onSave, initialData }) {
           <Box
             onClick={handleSave}
             sx={{
-              py: "12px",
+              py: 1,
+              px: 2,
               textAlign: "center",
-              borderRadius: "12px",
+              borderRadius: 2,
               cursor: "pointer",
               bgcolor: colors.primary,
-              fontSize: 14,
-              fontWeight: 500,
+              fontSize: "14px",
+              fontWeight: 600,
               color: "#fff",
+              border: "none",
+              outline: "none",
+              fontFamily: "inherit",
+              "&:active": { opacity: 0.8 },
             }}
           >
             Save
