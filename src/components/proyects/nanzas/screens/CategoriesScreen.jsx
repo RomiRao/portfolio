@@ -20,13 +20,15 @@ import MenuItem from "@mui/material/MenuItem";
 import houseIcon from "../../../../assets/icons/house-icon.svg";
 import transactionIcon from "../../../../assets/icons/transaction-icon.svg";
 import petIcon from "../../../../assets/icons/pet-icon.svg";
+import downIcon from "../../../../assets/icons/down-icon.svg";
+import upIcon from "../../../../assets/icons/up-icon.svg";
 
 const TRANSACTIONS_STORAGE_KEY = "nanzas_transactions";
 
 function isCategoryInUse(categoryId) {
   if (!categoryId) return false;
   const transactions = JSON.parse(
-    localStorage.getItem(TRANSACTIONS_STORAGE_KEY) || "[]"
+    localStorage.getItem(TRANSACTIONS_STORAGE_KEY) || "[]",
   );
   return transactions.some((t) => String(t.categoryId) === String(categoryId));
 }
@@ -116,8 +118,11 @@ export default function CategoriesScreen() {
         overflowY: "auto",
         bgcolor: "#fff",
         px: 2,
-        pt: 1.5,
+        pt: 3,
         pb: 2,
+        gap: 2,
+        display: "flex",
+        flexDirection: "column",
         position: "relative",
         "&::-webkit-scrollbar": { display: "none" },
         msOverflowStyle: "none",
@@ -144,7 +149,7 @@ export default function CategoriesScreen() {
           sx={{
             position: "absolute",
             right: 0,
-            border: "1.5px solid #c8d9b0",
+            bgcolor: colors.bgGreen,
             borderRadius: "50%",
             p: 0.4,
           }}
@@ -157,84 +162,114 @@ export default function CategoriesScreen() {
       <Box
         sx={{
           display: "flex",
-          bgcolor: "#c8d9b0",
-          borderRadius: "10px",
-          p: "4px",
-          gap: "4px",
-          mb: 2.5,
+          bgcolor: colors.light,
+          borderRadius: "8px",
+          overflow: "hidden",
         }}
       >
-        {["expense", "income"].map((t) => (
+        {[
+          { key: "expense", label: "Expense", icon: downIcon },
+          { key: "income", label: "Income", icon: upIcon },
+        ].map(({ key, label, icon }) => (
           <Box
-            key={t}
-            onClick={() => setTab(t)}
+            key={key}
+            onClick={() => setTab(key)}
             sx={{
               flex: 1,
-              textAlign: "center",
-              py: "9px",
-              borderRadius: "8px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+              py: 1,
+              px: 3,
+
               cursor: "pointer",
-              fontSize: 13,
-              fontWeight: 500,
-              bgcolor: tab === t ? colors.primary : "transparent",
-              color: tab === t ? "#fff" : "#3a5a1c",
+              bgcolor: tab === key ? colors.primary : colors.bgGreen,
+              transition: "all 0.15s ease",
             }}
           >
-            {t === "expense" ? "↓ Expense" : "↑ Income"}
+            <img
+              src={icon}
+              alt={label}
+              style={{
+                width: "18px",
+                height: "18px",
+                filter: tab === key ? "brightness(0) invert(1)" : "none",
+                transition: "filter 0.15s ease",
+              }}
+            />
+            <span
+              style={{
+                fontWeight: 500,
+                fontSize: "15px",
+                color: tab === key ? colors.surface : colors.primary,
+                transition: "color 0.15s ease",
+              }}
+            >
+              {label}
+            </span>
           </Box>
         ))}
       </Box>
 
       {/* List */}
-      {filtered.length === 0 ? (
-        <Typography
-          sx={{ fontSize: 13, color: "#aaa", textAlign: "center", mt: 4 }}
-        >
-          No categories yet
-        </Typography>
-      ) : (
-        filtered.map((cat, i) => (
-          <React.Fragment key={cat.id}>
-            {i > 0 && <Divider />}
-            <Box
-              sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 1.2 }}
-            >
-              <Avatar
+
+      <Box sx={{ p: 2 }}>
+        {filtered.length === 0 ? (
+          <Typography
+            sx={{ fontSize: 13, color: "#aaa", textAlign: "center", mt: 4 }}
+          >
+            No categories yet
+          </Typography>
+        ) : (
+          filtered.map((cat, i) => (
+            <React.Fragment key={cat.id}>
+              {i > 0 && <Divider />}
+              <Box
                 sx={{
-                  bgcolor: cat.color,
-                  width: 38,
-                  height: 38,
-                  borderRadius: "10px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.5,
+                  py: 1.2,
                 }}
               >
-                <img
-                  src={cat.icon}
-                  width="20"
-                  height="20"
-                  style={{ filter: "brightness(0) invert(1)" }}
-                  alt={cat.iconName}
-                />
-              </Avatar>
-              <Typography
-                sx={{ flex: 1, fontSize: 14, fontWeight: 500, color: "#111" }}
-              >
-                {cat.name}
-              </Typography>
-              <IconButton
-                size="small"
-                sx={{ p: 0.25, color: colors.border }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setMenuAnchor(e.currentTarget);
-                  setMenuCat(cat);
-                }}
-              >
-                <MoreVertIcon sx={{ fontSize: 19 }} />
-              </IconButton>
-            </Box>
-          </React.Fragment>
-        ))
-      )}
+                <Avatar
+                  sx={{
+                    bgcolor: cat.color,
+                    width: 38,
+                    height: 38,
+                    borderRadius: "10px",
+                  }}
+                >
+                  <img
+                    src={cat.icon}
+                    width="20"
+                    height="20"
+                    style={{ filter: "brightness(0) invert(1)" }}
+                    alt={cat.iconName}
+                  />
+                </Avatar>
+                <Typography
+                  sx={{ flex: 1, fontSize: 14, fontWeight: 500, color: "#111" }}
+                >
+                  {cat.name}
+                </Typography>
+                <IconButton
+                  size="small"
+                  sx={{ p: 0.25, color: colors.border }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenuAnchor(e.currentTarget);
+                    setMenuCat(cat);
+                  }}
+                >
+                  <MoreVertIcon sx={{ fontSize: 19 }} />
+                </IconButton>
+              </Box>
+            </React.Fragment>
+          ))
+        )}
+      </Box>
       <Menu
         anchorEl={menuAnchor}
         open={Boolean(menuAnchor)}

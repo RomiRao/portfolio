@@ -9,6 +9,8 @@ import {
 } from "@mui/material";
 import { ChevronLeft } from "@mui/icons-material";
 import { colors } from "../colors";
+import downIcon from "../../../../assets/icons/down-icon.svg";
+import upIcon from "../../../../assets/icons/up-icon.svg";
 
 const today = new Date().toISOString().split("T")[0];
 
@@ -50,7 +52,7 @@ export default function NewTransactionScreen({ onBack, params }) {
   useEffect(() => {
     if (params?.editId) {
       const stored = JSON.parse(
-        localStorage.getItem("nanzas_transactions") || "[]"
+        localStorage.getItem("nanzas_transactions") || "[]",
       );
       const txToEdit = stored.find((t) => t.id === params.editId);
 
@@ -99,7 +101,7 @@ export default function NewTransactionScreen({ onBack, params }) {
     }
 
     const stored = JSON.parse(
-      localStorage.getItem("nanzas_transactions") || "[]"
+      localStorage.getItem("nanzas_transactions") || "[]",
     );
 
     if (params?.editId) {
@@ -114,7 +116,7 @@ export default function NewTransactionScreen({ onBack, params }) {
               amount: Number(parsedAmount.toFixed(2)),
               date,
             }
-          : t
+          : t,
       );
       localStorage.setItem("nanzas_transactions", JSON.stringify(updatedList));
       showToast("Transaction updated ✓");
@@ -162,18 +164,27 @@ export default function NewTransactionScreen({ onBack, params }) {
         px: 2.5,
         pt: 2.5,
         pb: 2,
+        gap: 4,
       }}
     >
       {/* ── Header ── */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 2 }}>
+      <Box sx={{ display: "flex", alignItems: "center" }}>
         <IconButton
           size="small"
           onClick={onBack}
           sx={{ color: colors.primary, p: 0.3 }}
         >
-          <ChevronLeft sx={{ fontSize: 22 }} />
+          <ChevronLeft sx={{ fontSize: 40 }} />
         </IconButton>
-        <Typography sx={{ fontSize: 20, fontWeight: 700, color: "#111" }}>
+        <Typography
+          sx={{
+            fontSize: 26,
+            fontWeight: 600,
+            color: colors.primary,
+            textAlign: "center",
+            width: "100%",
+          }}
+        >
           {params?.editId ? "Edit transaction" : "New transaction"}
         </Typography>
       </Box>
@@ -182,41 +193,58 @@ export default function NewTransactionScreen({ onBack, params }) {
       <Box
         sx={{
           display: "flex",
-          bgcolor: "#c8d9b0",
-          borderRadius: "10px",
-          p: "4px",
-          gap: "4px",
-          mb: 2.5,
+          bgcolor: colors.light,
+          borderRadius: "8px",
+          overflow: "hidden",
         }}
       >
-        {["expense", "income"].map((t) => (
+        {[
+          { key: "expense", label: "Expense", icon: downIcon },
+          { key: "income", label: "Income", icon: upIcon },
+        ].map(({ key, label, icon }) => (
           <Box
-            key={t}
-            onClick={() => setTab(t)}
+            key={key}
+            onClick={() => setTab(key)}
             sx={{
               flex: 1,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: "6px",
-              py: "9px",
-              borderRadius: "8px",
+              gap: "8px",
+              py: 1,
+              px: 3,
+
               cursor: "pointer",
-              bgcolor: tab === t ? colors.primary : "transparent",
-              color: tab === t ? "#fff" : "#3a5a1c",
-              fontWeight: 500,
-              fontSize: "14px",
-              transition: "background 0.15s",
+              bgcolor: tab === key ? colors.primary : colors.bgGreen,
+              transition: "all 0.15s ease",
             }}
           >
-            <span style={{ fontSize: 15 }}>{t === "expense" ? "↓" : "↑"}</span>
-            {t.charAt(0).toUpperCase() + t.slice(1)}
+            <img
+              src={icon}
+              alt={label}
+              style={{
+                width: "18px",
+                height: "18px",
+                filter: tab === key ? "brightness(0) invert(1)" : "none",
+                transition: "filter 0.15s ease",
+              }}
+            />
+            <span
+              style={{
+                fontWeight: 500,
+                fontSize: "15px",
+                color: tab === key ? colors.surface : colors.primary,
+                transition: "color 0.15s ease",
+              }}
+            >
+              {label}
+            </span>
           </Box>
         ))}
       </Box>
 
       {/* ── Category ── */}
-      <Box sx={{ mb: 2 }}>
+      <Box>
         <Typography component="label" sx={labelSx}>
           Category
         </Typography>
@@ -298,7 +326,7 @@ export default function NewTransactionScreen({ onBack, params }) {
       </Box>
 
       {/* ── Description ── */}
-      <Box sx={{ mb: 2 }}>
+      <Box>
         <Typography component="label" htmlFor="desc-input" sx={labelSx}>
           Description
         </Typography>
@@ -317,7 +345,6 @@ export default function NewTransactionScreen({ onBack, params }) {
           display: "grid",
           gridTemplateColumns: "1fr 1fr",
           gap: 1.5,
-          mb: 2,
         }}
       >
         <Box>
@@ -353,37 +380,39 @@ export default function NewTransactionScreen({ onBack, params }) {
         sx={{
           display: "grid",
           gridTemplateColumns: "1fr 1fr",
-          gap: 1.5,
+          gap: 1,
           mt: 1,
         }}
       >
         <Box
           onClick={handleCancel}
           sx={{
-            py: "13px",
+            py: 1,
+            px: 2,
             textAlign: "center",
-            borderRadius: "12px",
+            borderRadius: 2,
             cursor: "pointer",
-            bgcolor: "#e8e8e8",
-            border: "1px solid #ccc",
+            bgcolor: colors.bgGreen,
+
             fontSize: "14px",
-            fontWeight: 500,
-            color: "#555",
+            fontWeight: 600,
+            color: colors.primary,
           }}
         >
           Cancel
         </Box>
         <Box
-          component="button" // Convertido a botón real para submit
+          component="button"
           type="submit"
           sx={{
-            py: "13px",
+            py: 1,
+            px: 2,
             textAlign: "center",
-            borderRadius: "12px",
+            borderRadius: 2,
             cursor: "pointer",
             bgcolor: colors.primary,
             fontSize: "14px",
-            fontWeight: 500,
+            fontWeight: 600,
             color: "#fff",
             border: "none",
             outline: "none",
