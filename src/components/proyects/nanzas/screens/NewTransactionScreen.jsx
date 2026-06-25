@@ -18,7 +18,7 @@ const fieldSx = {
   width: "100%",
   padding: "10px 12px",
   border: "1px solid #d0d0d0",
-  borderRadius: 1.3,
+  borderRadius: 4,
   background: "#fff",
   fontSize: 12,
   color: "#1a1a1a",
