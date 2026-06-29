@@ -1,11 +1,361 @@
-import React from "react";
-import { Box, Typography, Button, IconButton, Stack } from "@mui/material";
+import React, { useEffect, useState, useMemo } from "react";
+import {
+  Box,
+  Typography,
+  Button,
+  IconButton,
+  Stack,
+  TextField,
+  Portal,
+  Select,
+  MenuItem,
+} from "@mui/material";
+import { Add } from "@mui/icons-material";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import AddIcon from "@mui/icons-material/Add";
 import WifiIcon from "@mui/icons-material/Wifi";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import { colors } from "../../nanzas/colors";
+import MonthlyExpensesChart from "./MontlyExpensesChart";
+import { ChevronLeft } from "@mui/icons-material";
 
-export default function CardsScreen({ onBack }) {
+const CARDS_STORAGE_KEY = "nanzas_cards";
+const EXPENSES_STORAGE_KEY = "nanzas_card_expenses";
+
+// --- Array por defecto ---
+const DEFAULT_CARDS = [
+  {
+    id: 1,
+    type: "AMEX",
+    bank: "Bank",
+    number: "4539148275935084",
+    cutoff: "07",
+    expire: "30",
+    balance: 0,
+    theme: "dark",
+  },
+  {
+    id: 2,
+    type: "AMEX",
+    bank: "Bank",
+    number: "4539148275935084",
+    cutoff: "07",
+    expire: "30",
+    balance: 0,
+    theme: "light",
+  },
+];
+
+function maskCardNumber(number) {
+  const digits = String(number ?? "");
+  const last4 = digits.slice(-4);
+  return { masked: "•••• •••• ••••", last4 };
+}
+
+function loadCardsFromStorage() {
+  try {
+    const raw = localStorage.getItem(CARDS_STORAGE_KEY);
+    if (raw === null) {
+      localStorage.setItem(CARDS_STORAGE_KEY, JSON.stringify(DEFAULT_CARDS));
+      return DEFAULT_CARDS;
+    }
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return parsed;
+    }
+    localStorage.setItem(CARDS_STORAGE_KEY, JSON.stringify(DEFAULT_CARDS));
+    return DEFAULT_CARDS;
+  } catch (e) {
+    return DEFAULT_CARDS;
+  }
+}
+
+// --- COMPONENTE DEL MODAL ---
+function CardModal({
+  isOpen,
+  onClose,
+  onSave,
+  onDelete,
+  containerRef,
+  editingCard,
+}) {
+  const [bank, setBank] = useState("");
+  const [cardNumber, setCardNumber] = useState("");
+  const [cutoff, setCutoff] = useState("");
+  const [expire, setExpire] = useState("");
+
+  // Precargar datos si estamos en modo edición
+  useEffect(() => {
+    if (editingCard && isOpen) {
+      setBank(editingCard.bank || "");
+      setCardNumber(editingCard.number || "");
+      setCutoff(editingCard.cutoff || "");
+      setExpire(editingCard.expire || "");
+    } else if (isOpen && !editingCard) {
+      setBank("");
+      setCardNumber("");
+      setCutoff("");
+      setExpire("");
+    }
+  }, [editingCard, isOpen]);
+
+  if (!isOpen) return null;
+
+  const isFormValid =
+    bank.trim() !== "" &&
+    cardNumber.trim() !== "" &&
+    cutoff.trim() !== "" &&
+    expire.trim() !== "";
+
+  const handleCardNumberChange = (e) => {
+    const onlyNumbers = e.target.value.replace(/\D/g, "");
+    const limitedNumbers = onlyNumbers.substring(0, 16);
+    const formattedCardNumber = limitedNumbers
+      .replace(/(\d{4})(?=\d)/g, "$1 ")
+      .trim();
+    setCardNumber(formattedCardNumber);
+  };
+
+  const handleSave = () => {
+    if (!isFormValid) return;
+    onSave({
+      id: editingCard?.id, // Pasamos el ID si existe
+      bank,
+      cardNumber: cardNumber.replace(/\s/g, ""), // Guardamos sin espacios
+      cutoff,
+      expire,
+    });
+  };
+
+  const handleDeleteClick = () => {
+    if (!editingCard) return;
+
+    // Lógica para validar si tiene gastos del mes corriente en adelante
+    try {
+      const rawExpenses = localStorage.getItem(EXPENSES_STORAGE_KEY);
+      const expenses = rawExpenses ? JSON.parse(rawExpenses) : [];
+
+      const now = new Date();
+      const currentMonth = now.getMonth(); // 0-11
+      const currentYear = now.getFullYear();
+
+      // Asumimos que los gastos guardados tienen { cardId, date: "YYYY-MM-DD" }
+      const hasFutureOrCurrentExpenses = expenses.some((exp) => {
+        if (exp.cardId !== editingCard.id) return false;
+
+        const expDate = new Date(exp.date);
+        const expYear = expDate.getFullYear();
+        const expMonth = expDate.getMonth();
+
+        if (expYear > currentYear) return true;
+        if (expYear === currentYear && expMonth >= currentMonth) return true;
+
+        return false;
+      });
+
+      if (hasFutureOrCurrentExpenses) {
+        alert(
+          "You cannot delete this card because there are expenses linked to it from the current month onwards.",
+        );
+        return;
+      }
+
+      // Si pasa la validación, procedemos a borrar
+      onDelete(editingCard.id);
+    } catch (e) {
+      console.error("Error reading expenses", e);
+    }
+  };
+
+  const inputStyles = {
+    "& .MuiOutlinedInput-root": {
+      borderRadius: "6px",
+      color: colors.black,
+      height: "45px",
+      "& fieldset": { borderColor: "#689c6d" },
+      "& hover fieldset": { borderColor: colors.primary },
+      "&.Mui-focused fieldset": { borderColor: colors.primary },
+    },
+    "& input": { fontSize: 14, fontFamily: "inherit" },
+  };
+
+  const labelStyles = {
+    fontSize: 12,
+    fontWeight: 600,
+    color: colors.primary,
+    mb: 0.5,
+  };
+
+  return (
+    <Portal container={containerRef?.current || containerRef}>
+      <Box
+        sx={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0, 0, 0, 0.5)",
+          zIndex: 9999,
+          display: "flex",
+          alignItems: "flex-end",
+          borderBottomLeftRadius: "inherit",
+          borderBottomRightRadius: "inherit",
+          overflow: "hidden",
+        }}
+        onClick={onClose}
+      >
+        <Box
+          onClick={(e) => e.stopPropagation()}
+          sx={{
+            width: "100%",
+            backgroundColor: "#fff",
+            borderTopLeftRadius: "24px",
+            borderTopRightRadius: "24px",
+            p: 3,
+            pb: 4,
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+          }}
+        >
+          <Typography
+            sx={{
+              textAlign: "center",
+              fontWeight: 700,
+              color: colors.primary,
+              fontSize: 18,
+              mb: 1,
+            }}
+          >
+            {editingCard ? "Edit card" : "New card"}
+          </Typography>
+
+          <Box>
+            <Typography sx={labelStyles}>Bank/ virtual wallet</Typography>
+            <TextField
+              fullWidth
+              placeholder="Ej: Clothes"
+              value={bank}
+              onChange={(e) => setBank(e.target.value)}
+              sx={inputStyles}
+            />
+          </Box>
+
+          <Box>
+            <Typography sx={labelStyles}>Card number</Typography>
+            <TextField
+              fullWidth
+              placeholder="Ej: 2034 3839 2637 1049"
+              value={cardNumber}
+              onChange={handleCardNumberChange}
+              type="tel"
+              sx={inputStyles}
+            />
+          </Box>
+
+          <Stack direction="row" spacing={1} sx={{ width: "100%" }}>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography sx={labelStyles}>Day of cut-off</Typography>
+              <TextField
+                fullWidth
+                type="number"
+                inputProps={{ min: 1, max: 31 }}
+                placeholder="Ej: 10"
+                value={cutoff}
+                onChange={(e) => setCutoff(e.target.value)}
+                sx={inputStyles}
+              />
+            </Box>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography sx={labelStyles}>Day of expiration</Typography>
+              <TextField
+                fullWidth
+                type="number"
+                inputProps={{ min: 1, max: 31 }}
+                placeholder="Ej: 20"
+                value={expire}
+                onChange={(e) => setExpire(e.target.value)}
+                sx={inputStyles}
+              />
+            </Box>
+          </Stack>
+
+          <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
+            <Button
+              fullWidth
+              onClick={onClose}
+              sx={{
+                py: 0.6,
+                px: 2,
+                textAlign: "center",
+                borderRadius: 1.3,
+                cursor: "pointer",
+                bgcolor: colors.bgGreen,
+                textTransform: "none",
+                fontSize: 12,
+                fontWeight: 600,
+                color: colors.primary,
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              fullWidth
+              onClick={handleSave}
+              disabled={!isFormValid}
+              sx={{
+                py: 0.6,
+                px: 2,
+                textAlign: "center",
+                borderRadius: 1.3,
+                cursor: "pointer",
+                bgcolor: colors.primary,
+                fontSize: 12,
+                fontWeight: 600,
+                color: "#fff",
+                border: "none",
+                outline: "none",
+                fontFamily: "inherit",
+                "&:active": { opacity: 0.8 },
+                textTransform: "none",
+              }}
+            >
+              Save
+            </Button>
+          </Stack>
+
+          {/* Botón de eliminar solo en modo edición */}
+          {editingCard && (
+            <Button
+              fullWidth
+              onClick={handleDeleteClick}
+              sx={{
+                py: 0.6,
+                px: 2,
+                textAlign: "center",
+                borderRadius: 1.3,
+                cursor: "pointer",
+                bgcolor: "transparent",
+                border: "1px solid #d32f2f",
+                fontSize: 12,
+                fontWeight: 600,
+                color: "#d32f2f",
+                fontFamily: "inherit",
+                textTransform: "none",
+              }}
+            >
+              Delete card
+            </Button>
+          )}
+        </Box>
+      </Box>
+    </Portal>
+  );
+}
+
+// --- PANTALLA PRINCIPAL ---
+export default function CardsScreen({ onChange, onBack, phoneContainerRef }) {
   const chartData = [
     { month: "Jan", values: { auto: 20, inst: 70, one: 10 }, total: "$100" },
     { month: "Feb", values: { auto: 15, inst: 65, one: 10 }, total: "$90" },
@@ -14,62 +364,129 @@ export default function CardsScreen({ onBack }) {
     { month: "May", values: { auto: 25, inst: 50, one: 15 }, total: "$15" },
     { month: "Jun", values: { auto: 15, inst: 65, one: 10 }, total: "$20" },
   ];
+  const [selectedCardId, setSelectedCardId] = useState(null);
+  const [userCards, setUserCards] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingCard, setEditingCard] = useState(null);
 
-  const userCards = [
-    {
-      id: 1,
-      type: "AMEX",
-      bank: "Bank",
-      number: "5084",
-      cutoff: "07/3",
-      expire: "30/2",
-      balance: "$345",
-      theme: "dark",
-    },
-    {
-      id: 2,
-      type: "AMEX",
-      bank: "Bank",
-      number: "5084",
-      cutoff: "07/3",
-      expire: "30/2",
-      balance: "$345",
-      theme: "light",
-    },
-  ];
+  const totalBalance = useMemo(() => {
+    let expenses = [];
+    try {
+      const raw = localStorage.getItem(EXPENSES_STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      expenses = Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      console.error("Error leyendo gastos para calcular balance", e);
+    }
+
+    const relevantExpenses =
+      selectedCardId === null || selectedCardId === "all"
+        ? expenses
+        : expenses.filter((exp) => exp.cardId === selectedCardId);
+
+    return relevantExpenses.reduce(
+      (sum, exp) => sum + (Number(exp.amount) || 0),
+      0,
+    );
+  }, [selectedCardId, userCards]);
+
+  useEffect(() => {
+    setUserCards(loadCardsFromStorage());
+  }, []);
+
+  const handleOpenNewCard = () => {
+    setEditingCard(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEditCard = (card) => {
+    setEditingCard(card);
+    setIsModalOpen(true);
+  };
+
+  const handleSaveCard = (cardData) => {
+    let updatedCards = [];
+
+    if (cardData.id) {
+      // Editar tarjeta existente
+      updatedCards = userCards.map((card) =>
+        card.id === cardData.id
+          ? {
+              ...card,
+              bank: cardData.bank,
+              number: cardData.cardNumber,
+              cutoff: cardData.cutoff,
+              expire: cardData.expire,
+            }
+          : card,
+      );
+    } else {
+      // Crear nueva tarjeta
+      const newCard = {
+        id: Date.now(),
+        type: "VISA", // Por defecto, o puedes agregar un selector luego
+        bank: cardData.bank,
+        number: cardData.cardNumber,
+        cutoff: cardData.cutoff,
+        expire: cardData.expire,
+        balance: 0,
+        theme: userCards.length % 2 === 0 ? "dark" : "light",
+      };
+      updatedCards = [...userCards, newCard];
+    }
+
+    setUserCards(updatedCards);
+    localStorage.setItem(CARDS_STORAGE_KEY, JSON.stringify(updatedCards));
+    setIsModalOpen(false);
+    setEditingCard(null);
+  };
+
+  const handleDeleteCard = (id) => {
+    const updatedCards = userCards.filter((card) => card.id !== id);
+    setUserCards(updatedCards);
+    localStorage.setItem(CARDS_STORAGE_KEY, JSON.stringify(updatedCards));
+    setIsModalOpen(false);
+    setEditingCard(null);
+  };
 
   return (
     <Box
       sx={{
+        position: "relative",
         flex: 1,
-        height: "100%", // Asegura que el contenedor ocupe el alto disponible
+        height: "100%",
         bgcolor: "#f4f6f4",
         borderTopLeftRadius: "32px",
         borderTopRightRadius: "32px",
         display: "flex",
         flexDirection: "column",
-        px: 2.5,
-        pt: 2,
-        overflow: "hidden", // Evita que la pantalla completa rebote o rompa el layout
+        px: 1.5,
+        pt: 3,
+        overflow: "hidden",
+        gap: 2,
       }}
     >
-      {/* --- HEADER (Fijo en la parte superior) --- */}
-      <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-        <IconButton onClick={onBack} sx={{ p: 0, color: "#1b4d22", mr: 1 }}>
-          <ArrowBackIosNewIcon sx={{ fontSize: 20 }} />
+      {/* --- HEADER --- */}
+      <Box sx={{ display: "flex", alignItems: "center" }}>
+        <IconButton
+          size="small"
+          onClick={onBack}
+          sx={{ color: colors.primary, p: 0.3 }}
+        >
+          <ChevronLeft sx={{ fontSize: 40 }} />
         </IconButton>
         <Typography variant="h5" sx={{ fontWeight: 700, color: "#1b4d22" }}>
           My cards
         </Typography>
       </Box>
 
-      {/* --- CONTENEDOR SCROLEABLE (Desde Balance hasta las Tarjetas) --- */}
+      {/* --- CONTENEDOR SCROLEABLE --- */}
       <Box
         sx={{
           flex: 1,
-          overflowY: "auto", // Habilita el scroll vertical general aquí
+          overflowY: "auto",
           pb: 4,
-          "&::-webkit-scrollbar": { display: "none" }, // Oculta la barra nativa
+          "&::-webkit-scrollbar": { display: "none" },
         }}
       >
         {/* --- BALANCE GENERAL --- */}
@@ -79,6 +496,7 @@ export default function CardsScreen({ onBack }) {
             justifyContent: "space-between",
             alignItems: "flex-start",
             mb: 2,
+            px: 2,
           }}
         >
           <Box>
@@ -88,209 +506,139 @@ export default function CardsScreen({ onBack }) {
             <Typography
               sx={{ fontSize: 28, fontWeight: 800, color: "#000", mt: -0.5 }}
             >
-              $500
+              ${totalBalance.toLocaleString("en-US")}
             </Typography>
           </Box>
 
-          <Box
+          <Select
+            value={selectedCardId ?? "all"}
+            onChange={(e) => {
+              const value = e.target.value;
+              setSelectedCardId(value === "all" ? null : value);
+            }}
+            IconComponent={ArrowDropDownIcon}
+            variant="standard"
+            disableUnderline
             sx={{
-              display: "flex",
-              alignItems: "center",
-              bgcolor: "#d2e7d6",
-              px: 1.5,
+              backgroundColor: colors.bgLightGreen,
+              px: 1,
               py: 0.5,
-              borderRadius: "12px",
-              cursor: "pointer",
+              borderRadius: 1,
+              fontSize: 12,
+              fontWeight: 600,
+              color: colors.primary,
+              "& .MuiSelect-select": {
+                display: "flex",
+                alignItems: "center",
+                py: "2px !important",
+                pr: "20px !important",
+              },
+              "& .MuiSelect-icon": {
+                color: colors.primary,
+                fontSize: 18,
+              },
+              "&:before, &:after": { display: "none" },
+            }}
+            MenuProps={{
+              PaperProps: {
+                sx: {
+                  borderRadius: 2,
+                  mt: 0.5,
+                  bgcolor: "white",
+                },
+              },
             }}
           >
-            <Typography
-              sx={{ fontSize: 12, fontWeight: 600, color: "#1b4d22" }}
+            <MenuItem
+              value="all"
+              sx={{ fontSize: 12, fontWeight: 600, color: colors.primary }}
             >
               All cards
-            </Typography>
-            <ArrowDropDownIcon
-              sx={{ fontSize: 18, color: "#1b4d22", ml: 0.5 }}
-            />
-          </Box>
+            </MenuItem>
+
+            {userCards.map((card) => {
+              const { last4 } = maskCardNumber(card.number);
+              return (
+                <MenuItem
+                  key={card.id}
+                  value={card.id}
+                  sx={{ fontSize: 12, fontWeight: 600, color: colors.primary }}
+                >
+                  {card.bank} - •••• {last4}
+                </MenuItem>
+              );
+            })}
+          </Select>
         </Box>
 
         {/* --- GRÁFICO DE BARRAS APILADAS --- */}
-        <Box
-          sx={{
-            height: 160,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-end",
-            mb: 2,
-            pt: 1,
-            position: "relative",
-          }}
-        >
-          {chartData.map((data, index) => {
-            const isSelected = data.month === "May";
-            return (
-              <Box
-                key={index}
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  flex: 1,
-                }}
-              >
-                <Box
-                  sx={{
-                    width: 24,
-                    height: 110,
-                    display: "flex",
-                    flexDirection: "column-reverse",
-                    borderRadius: "4px",
-                    overflow: "hidden",
-                    bgcolor: "#e0e0e0",
-                  }}
-                >
-                  <Box
-                    sx={{ height: `${data.values.inst}%`, bgcolor: "#387642" }}
-                  />
-                  <Box
-                    sx={{ height: `${data.values.one}%`, bgcolor: "#93b399" }}
-                  />
-                  <Box
-                    sx={{ height: `${data.values.auto}%`, bgcolor: "#0f3216" }}
-                  />
-                </Box>
-
-                {isSelected ? (
-                  <Box
-                    sx={{
-                      bgcolor: "#1b4d22",
-                      color: "#fff",
-                      px: 1,
-                      borderRadius: "10px",
-                      mt: 0.5,
-                    }}
-                  >
-                    <Typography sx={{ fontSize: 10, fontWeight: 600 }}>
-                      {data.month}
-                    </Typography>
-                  </Box>
-                ) : (
-                  <Typography sx={{ fontSize: 11, color: "#888", mt: 0.5 }}>
-                    {data.month}
-                  </Typography>
-                )}
-                <Typography
-                  sx={{
-                    fontSize: 10,
-                    color: "#444",
-                    fontWeight: isSelected ? 700 : 400,
-                  }}
-                >
-                  {data.total}
-                </Typography>
-              </Box>
-            );
-          })}
-        </Box>
-
-        {/* --- LEYENDA DEL GRÁFICO --- */}
-        <Stack
-          direction="row"
-          spacing={1}
-          justifyContent="center"
-          sx={{ mb: 3, flexWrap: "wrap", gap: 1 }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <Box
-              sx={{
-                width: 12,
-                height: 12,
-                borderRadius: "50%",
-                bgcolor: "#0f3216",
-              }}
-            />
-            <Typography sx={{ fontSize: 9, fontWeight: 700, color: "#000" }}>
-              Automatic debits
-            </Typography>
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <Box
-              sx={{
-                width: 12,
-                height: 12,
-                borderRadius: "50%",
-                bgcolor: "#387642",
-              }}
-            />
-            <Typography sx={{ fontSize: 9, fontWeight: 700, color: "#000" }}>
-              Installments purchases
-            </Typography>
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <Box
-              sx={{
-                width: 12,
-                height: 12,
-                borderRadius: "50%",
-                bgcolor: "#93b399",
-              }}
-            />
-            <Typography sx={{ fontSize: 9, fontWeight: 700, color: "#000" }}>
-              One-time purchase
-            </Typography>
-          </Box>
-        </Stack>
+        <MonthlyExpensesChart cardId={selectedCardId} />
 
         {/* --- BOTÓN ADD CARD EXPENSE --- */}
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          fullWidth // Hace que el botón ocupe todo el ancho de forma limpia en el flujo vertical
-          sx={{
-            bgcolor: "#2d5a37",
-            color: "#fff",
-            textTransform: "none",
-            borderRadius: "10px",
-            py: 1,
-            mb: 3,
-            fontWeight: 600,
-            fontSize: 14,
-            "&:hover": { bgcolor: "#1e3f26" },
-          }}
-        >
-          Add Card Expense
-        </Button>
+        <Box sx={{ display: "flex", width: "100%", justifyContent: "center" }}>
+          <Button
+            onClick={() => onChange("cardexpense")}
+            variant="contained"
+            startIcon={<AddIcon />}
+            sx={{
+              bgcolor: colors.primary,
+              color: colors.surface,
+              textTransform: "none",
+              borderRadius: 2,
 
+              mb: 2,
+              fontWeight: 500,
+              fontSize: 13,
+            }}
+          >
+            Add Card Expense
+          </Button>
+        </Box>
         {/* --- SECCIÓN CARDS --- */}
         <Box
           sx={{
-            width: "calc(100% + 40px)", // 🔥 CAMBIO AQUÍ: Compensa los márgenes negativos para que estire en ambos lados
-            overflowX: "auto",
-            "&::-webkit-scrollbar": { display: "none" }, // Oculta la barra de scroll
-            mx: -2.5, // Desplaza el contenedor hacia los bordes de la pantalla
-            px: 2.5, // Mantiene el contenido inicial alineado con el resto de la app
+            width: "100%",
+            display: "flex",
+            justifyContent: "space-between",
+            px: 1.5,
           }}
         >
-          <Typography sx={{ fontWeight: 700, color: "#555", fontSize: 16 }}>
+          <Typography
+            sx={{ fontWeight: 700, color: colors.gray, fontSize: 16 }}
+          >
             Cards
           </Typography>
+
+          <IconButton
+            onClick={handleOpenNewCard} // Abre modal en modo "Nuevo"
+            sx={{
+              right: 0,
+              border: 1.7,
+              borderColor: colors?.primary || "#2d5a37",
+              p: 0.2,
+              width: 18,
+
+              height: 18,
+            }}
+          >
+            <Add sx={{ fontSize: 18, color: colors?.primary || "#2d5a37" }} />
+          </IconButton>
         </Box>
 
-        {/* Contenedor Vertical para las Tarjetas (Flujo natural con el scroll general) */}
         <Box
           sx={{
             width: "100%",
-            overflowX: "auto", // Corrección: Propiedad nativa para scroll horizontal
-            "&::-webkit-scrollbar": { display: "none" }, // Oculta la barra de scroll
-            mx: -2.5, // Truco de diseño: expande el área de scroll hasta los bordes de la pantalla
-            px: 2.5, // Mantiene el contenido alineado con el resto de la interfaz
+            overflowX: "auto",
+            mt: 1.5,
+            "&::-webkit-scrollbar": { display: "none" },
           }}
         >
           <Box
             sx={{
               display: "flex",
               gap: 1.5,
-              pb: 1, // Pequeño espacio inferior para evitar que se corten sombras o bordes
+              flexWrap: "nowrap",
+              width: "max-content",
             }}
           >
             {/* Renderizado dinámico de tarjetas */}
@@ -298,13 +646,15 @@ export default function CardsScreen({ onBack }) {
               const isDark = card.theme === "dark";
               const bgColor = isDark ? "#35693c" : "#d8ebd9";
               const textColor = isDark ? "#fff" : "#689c6d";
+              const { masked, last4 } = maskCardNumber(card.number);
 
               return (
                 <Box
                   key={card.id}
+                  onClick={() => handleEditCard(card)} // Habilita la edición al tocar
                   sx={{
-                    width: 290, // Ancho fijo para que la tarjeta se vea completa
-                    flexShrink: 0, // Evita que Flexbox aplaste la tarjeta
+                    width: 230,
+                    flexShrink: 0,
                     height: 140,
                     bgcolor: bgColor,
                     borderRadius: "16px",
@@ -313,9 +663,13 @@ export default function CardsScreen({ onBack }) {
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "space-between",
+                    cursor: "pointer",
+                    transition: "transform 0.2s",
+                    "&:active": {
+                      transform: "scale(0.98)",
+                    },
                   }}
                 >
-                  {/* Header de la tarjeta */}
                   <Box
                     sx={{
                       display: "flex",
@@ -343,7 +697,6 @@ export default function CardsScreen({ onBack }) {
                     />
                   </Box>
 
-                  {/* Número de tarjeta */}
                   <Box
                     sx={{
                       display: "flex",
@@ -354,14 +707,13 @@ export default function CardsScreen({ onBack }) {
                     <Typography
                       sx={{ fontSize: 20, letterSpacing: 3, fontWeight: 700 }}
                     >
-                      •••• •••• ••••
+                      {masked}
                     </Typography>
                     <Typography sx={{ fontSize: 18, fontWeight: 500 }}>
-                      {card.number}
+                      {last4}
                     </Typography>
                   </Box>
 
-                  {/* Información inferior (Fechas y Balance) */}
                   <Box
                     sx={{
                       display: "flex",
@@ -395,7 +747,7 @@ export default function CardsScreen({ onBack }) {
                         Balance
                       </Typography>
                       <Typography sx={{ fontSize: 18, fontWeight: 800 }}>
-                        {card.balance}
+                        ${card.balance}
                       </Typography>
                     </Box>
                   </Box>
@@ -403,11 +755,12 @@ export default function CardsScreen({ onBack }) {
               );
             })}
 
-            {/* Tarjeta 3 (Botón para agregar una nueva tarjeta física) */}
+            {/* Tarjeta (Botón para agregar una nueva tarjeta física) */}
             <Box
+              onClick={handleOpenNewCard} // Abre Modal en modo "Nuevo"
               sx={{
-                width: 290, // Mismo ancho que las tarjetas anteriores
-                flexShrink: 0, // Evita que se deforme
+                width: 290,
+                flexShrink: 0,
                 height: 140,
                 bgcolor: "#859385",
                 borderRadius: "16px",
@@ -436,6 +789,19 @@ export default function CardsScreen({ onBack }) {
           </Box>
         </Box>
       </Box>
+
+      {/* Renderizamos el Modal al final pero dentro de CardsScreen */}
+      <CardModal
+        isOpen={isModalOpen}
+        editingCard={editingCard}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingCard(null);
+        }}
+        onSave={handleSaveCard}
+        onDelete={handleDeleteCard}
+        containerRef={phoneContainerRef}
+      />
     </Box>
   );
 }

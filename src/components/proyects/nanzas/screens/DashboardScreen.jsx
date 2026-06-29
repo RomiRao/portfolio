@@ -819,6 +819,7 @@ export default function DashboardScreen({
           </Typography>
         </Box>
         <Box
+          onClick={() => onChange("cardexpense")}
           sx={{
             display: "flex",
             flexDirection: "column",

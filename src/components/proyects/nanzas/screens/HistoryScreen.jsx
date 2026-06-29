@@ -46,7 +46,7 @@ export default function HistoryScreen({ onBack, onChange, phoneContainerRef }) {
   });
 
   const allCategories = JSON.parse(
-    localStorage.getItem("nanzas_categories") || "[]"
+    localStorage.getItem("nanzas_categories") || "[]",
   );
 
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
@@ -158,7 +158,7 @@ export default function HistoryScreen({ onBack, onChange, phoneContainerRef }) {
     <Box
       sx={{
         flex: 1,
-        bgcolor: colors.surface,
+
         borderTopRightRadius: "20px",
         borderTopLeftRadius: "20px",
         display: "flex",
@@ -180,20 +180,20 @@ export default function HistoryScreen({ onBack, onChange, phoneContainerRef }) {
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <IconButton onClick={onBack} sx={{ color: COLORS.primary, p: 0 }}>
+            <IconButton onClick={onBack} sx={{ color: colors.primary, p: 0 }}>
               <ArrowBackIosNewIcon fontSize="small" />
             </IconButton>
             <Typography
               variant="h5"
               component="h1"
-              sx={{ color: COLORS.primary, fontWeight: "bold" }}
+              sx={{ color: colors.primary, fontWeight: "bold" }}
             >
               History
             </Typography>
           </Box>
           <IconButton
             onClick={() => setFilterDrawerOpen(true)}
-            sx={{ color: COLORS.primary }}
+            sx={{ color: colors.primary }}
           >
             <TuneIcon />
           </IconButton>
@@ -208,15 +208,15 @@ export default function HistoryScreen({ onBack, onChange, phoneContainerRef }) {
                 label={filter.label}
                 onDelete={() => handleDeleteFilter(filter.key)}
                 sx={{
-                  bgcolor: COLORS.primary,
-                  color: COLORS.white,
+                  bgcolor: colors.primary,
+                  color: colors.surface,
                   fontWeight: 500,
                   fontSize: "0.75rem",
                   height: "26px",
                   "& .MuiChip-deleteIcon": {
                     color: "rgba(255, 255, 255, 0.7)",
                     fontSize: "14px",
-                    "&:hover": { color: COLORS.white },
+                    "&:hover": { color: colors.surface },
                   },
                 }}
               />
@@ -228,7 +228,7 @@ export default function HistoryScreen({ onBack, onChange, phoneContainerRef }) {
         <Paper
           elevation={0}
           sx={{
-            bgcolor: COLORS.white,
+            bgcolor: colors.surface,
             borderRadius: "24px",
             p: 2,
             mb: 3,
@@ -266,7 +266,7 @@ export default function HistoryScreen({ onBack, onChange, phoneContainerRef }) {
           ) : (
             sortedTransactions.map((tx) => {
               const cat = allCategories.find(
-                (c) => c.id.toString() === tx.categoryId?.toString()
+                (c) => c.id.toString() === tx.categoryId?.toString(),
               );
               return (
                 <TransactionItem
@@ -343,10 +343,10 @@ export default function HistoryScreen({ onBack, onChange, phoneContainerRef }) {
             startIcon={<AddIcon />}
             onClick={() => onChange("newtransaction")}
             sx={{
-              bgcolor: COLORS.primary,
-              color: COLORS.white,
+              bgcolor: colors.primary,
+              color: colors.surface,
               textTransform: "none",
-              borderRadius: "10px",
+              borderRadius: 1,
               px: 3,
               py: 0.8,
               fontWeight: 500,

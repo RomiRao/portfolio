@@ -13,6 +13,8 @@ import CategoriesScreen from "./screens/CategoriesScreen.jsx";
 import SummaryScreen from "./screens/SummaryScreen.jsx";
 import HistoryScreen from "./screens/HistoryScreen.jsx";
 import CardsScreen from "./screens/CardsScreen.jsx";
+import NewCardExpenseScreen from "./screens/NewCardExpenseScreen.jsx";
+import NewCardScreen from "./screens/NewCardScreen.jsx";
 
 //for paymentlist DEFAULT
 const initialPayments = [
@@ -78,7 +80,20 @@ export default function PhoneMockup() {
         phoneContainerRef={phoneRef}
       />
     ),
-    cards: <CardsScreen />,
+    cards: (
+      <CardsScreen
+        onChange={handleNavigation}
+        phoneContainerRef={phoneRef}
+        onBack={() => setCurrentScreen("dashboard")}
+      />
+    ),
+    cardexpense: (
+      <NewCardExpenseScreen
+        onBack={() => setCurrentScreen("dashboard")}
+        params={screenParams}
+      />
+    ),
+    // newcard: <NewCardScreen onBack={() => setCurrentScreen("dashboard")} />,
   };
 
   useEffect(() => {
