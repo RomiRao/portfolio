@@ -15,6 +15,7 @@ import HistoryScreen from "./screens/HistoryScreen.jsx";
 import CardsScreen from "./screens/CardsScreen.jsx";
 import NewCardExpenseScreen from "./screens/NewCardExpenseScreen.jsx";
 import NewCardScreen from "./screens/NewCardScreen.jsx";
+import SettingsScreen from "./screens/SettingsScreen.jsx";
 
 //for paymentlist DEFAULT
 const initialPayments = [
@@ -93,6 +94,7 @@ export default function PhoneMockup() {
         params={screenParams}
       />
     ),
+    settings: <SettingsScreen onChange={handleNavigation} />,
     // newcard: <NewCardScreen onBack={() => setCurrentScreen("dashboard")} />,
   };
 

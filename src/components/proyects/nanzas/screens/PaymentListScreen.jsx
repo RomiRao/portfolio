@@ -26,7 +26,7 @@ export default function PaymentListScreen({ payments, setPayments, onBack }) {
 
   const togglePaid = (id) =>
     setPayments((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, paid: !p.paid } : p))
+      prev.map((p) => (p.id === id ? { ...p, paid: !p.paid } : p)),
     );
 
   const handleAdd = (newPayment) => {
@@ -73,7 +73,7 @@ export default function PaymentListScreen({ payments, setPayments, onBack }) {
               <ArrowBackIosNewIcon sx={{ fontSize: 16 }} />
             </IconButton>
             <Typography
-              sx={{ fontSize: 22, fontWeight: 800, color: "#1a1a1a" }}
+              sx={{ fontSize: 22, fontWeight: 500, color: colors.primary }}
             >
               Payment list
             </Typography>
@@ -81,7 +81,7 @@ export default function PaymentListScreen({ payments, setPayments, onBack }) {
           <Box
             sx={{
               bgcolor: colors.bgGreen,
-              borderRadius: "10px",
+              borderRadius: 1,
               px: 1.5,
               py: 0.35,
             }}
@@ -227,7 +227,7 @@ export default function PaymentListScreen({ payments, setPayments, onBack }) {
                 <MenuItem
                   onClick={() => {
                     setPayments((prev) =>
-                      prev.filter((p) => p.id !== menuPayment.id)
+                      prev.filter((p) => p.id !== menuPayment.id),
                     );
                     setMenuAnchor(null);
                   }}
@@ -296,8 +296,8 @@ export default function PaymentListScreen({ payments, setPayments, onBack }) {
           if (editingPayment) {
             setPayments((prev) =>
               prev.map((p) =>
-                p.id === editingPayment.id ? { ...data, id: p.id } : p
-              )
+                p.id === editingPayment.id ? { ...data, id: p.id } : p,
+              ),
             );
           } else {
             handleAdd(data);
