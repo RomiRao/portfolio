@@ -269,6 +269,15 @@ const HeroSection = ({ darkMode, handleThemeToggle }) => (
               />
             ))}
           </Stack>
+          <Button
+            sx={{
+              bgcolor: green.primary,
+              color: surface.white,
+              px: 3,
+            }}
+          >
+            See prototype
+          </Button>
         </Box>
       </Box>
     </Container>
@@ -282,7 +291,7 @@ const IntroSection = () => (
   <Box
     sx={{
       bgcolor: green.primary,
-      px: { xs: 2, md: 10 },
+      px: { xs: 2, md: 40 },
       py: { xs: 8, md: 10 },
     }}
   >
@@ -308,14 +317,27 @@ const IntroSection = () => (
 /* ------------------------------------------------------------------ */
 const IsometricSection = () => (
   <Box
-    component="img"
-    src={phoneGrid}
-    alt="Phone mockup"
     sx={{
       width: "100%",
       display: "block",
+      height: { xs: "auto", lg: "700px" },
+      overflow: "hidden",
+      // Agregamos la máscara con un gradiente de negro (visible) a transparente (oculto)
+      WebkitMaskImage:
+        "linear-gradient(to bottom, black 50%, transparent 100%)",
+      maskImage: "linear-gradient(to bottom, black 50%, transparent 100%)",
     }}
-  />
+  >
+    <Box
+      component="img"
+      src={phoneGrid}
+      alt="Phone mockup"
+      sx={{
+        width: "100%",
+        display: "block",
+      }}
+    />
+  </Box>
 );
 
 /* ------------------------------------------------------------------ */
@@ -561,7 +583,7 @@ const TaskFlowSection = () => (
         />
         <Box>
           <Typography sx={{ textAlign: "center", mb: 3, color: green.primary }}>
-            Interactive design
+            Prototype design
           </Typography>
           <PhoneMockup />
         </Box>
@@ -636,7 +658,7 @@ const WireframesBand = () => (
       <Box
         sx={{
           mt: 6,
-          ml: { xs: 0, sm: "24px" },
+
           display: "grid",
           gridTemplateColumns: {
             xs: "1fr",
@@ -672,7 +694,7 @@ const WireframesBand = () => (
         <Box
           sx={{
             mt: 6,
-            ml: { xs: 0, sm: "24px" },
+
             display: "grid",
             gridTemplateColumns: {
               xs: "1fr",
@@ -690,6 +712,7 @@ const WireframesBand = () => (
               sx={{
                 width: "100%",
                 maxWidth: "600px",
+                filter: "drop-shadow(0px 8px 12px rgba(0, 0, 0, 0.3))",
               }}
             />
           ))}
