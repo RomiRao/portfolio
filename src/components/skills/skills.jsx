@@ -1,12 +1,10 @@
 import { Box, Typography } from "@mui/material";
 import HandymanIcon from "@mui/icons-material/Handyman";
 import { useState } from "react";
-import { useFadeIn } from "../../hooks/useFadeIn";
 
 function Skills({ id }) {
-  const { ref, style } = useFadeIn({ delay: 200 });
   return (
-    <section id={id} ref={ref} style={style}>
+    <section id={id}>
       <Box
         sx={{
           width: "100%",

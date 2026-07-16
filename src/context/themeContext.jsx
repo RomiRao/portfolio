@@ -10,7 +10,7 @@ const ThemeContext = createContext();
 
 export function ThemeProviderCustom({ children }) {
   const prefersDarkMode = window.matchMedia(
-    "(prefers-color-scheme: dark)"
+    "(prefers-color-scheme: dark)",
   ).matches;
 
   const [darkMode, setDarkMode] = useState(() => {
@@ -29,8 +29,19 @@ export function ThemeProviderCustom({ children }) {
   const theme = createTheme({
     palette: {
       mode: darkMode ? "dark" : "light",
+      primary: {
+        main: darkMode ? "#78a940" : "#3e680d",
+      },
+      secondary: {
+        main: darkMode ? "#28dacb" : "#0d6768",
+      },
+      fondoTarjetitas: {
+        fondo: darkMode ? "#111827" : "#fcf8f4",
+        borde: darkMode ? "#172033" : "#ffffff",
+        sombra: darkMode ? "#0000002c" : "#0000000c",
+      },
       background: {
-        default: darkMode ? "#121212" : "#f5f5f5",
+        default: darkMode ? "#0d1117" : "#e9e2d8",
         paper: "transparent",
       },
       text: {

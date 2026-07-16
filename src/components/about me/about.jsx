@@ -1,7 +1,7 @@
 import { Avatar, Box, Chip, styled, Typography } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import { useState } from "react";
-import { useFadeIn } from "../../hooks/useFadeIn";
+
 import HandymanIcon from "@mui/icons-material/Handyman";
 
 const Img = styled("img")({
@@ -13,9 +13,8 @@ const Img = styled("img")({
 });
 
 function About({ id }) {
-  const { ref, style } = useFadeIn({ delay: 200 });
   return (
-    <section id={id} ref={ref} style={{ ...style, scrollMarginTop: "64px" }}>
+    <section id={id}>
       <Box
         sx={{
           display: "flex",
@@ -32,27 +31,25 @@ function About({ id }) {
             borderColor: "divider",
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", marginBottom: 3 }}>
-            <PersonIcon sx={{ marginRight: 2 }} />
-            <Typography variant="h4">About me</Typography>
-          </Box>
-          <Typography sx={{ marginBottom: 2 }}>
-            I'm an artist that spent some contracts working and travelling for a
-            cruise ship company so I got to know to many people and places! But
-            now is time to keep working on my life and career.
+          <Typography sx={{ marginBottom: 10 }}>
+            I am a UX/UI Designer with a strong background in Front-End
+            Development, blending visual creativity with technical feasibility.
+            My journey began as a visual artist, working and traveling worldwide
+            for a cruise ship company. This unique experience allowed me to
+            connect with people from diverse cultures, deeply sharpening my
+            empathy and communication the core pillars of my user research and
+            design process. Driven by a passion for solving complex logic and
+            visual problems, I expanded my skills by studying Front-End
+            Development at ADA ITW. This technical edge allows me to design
+            intuitive digital experiences while understanding exactly how they
+            are built. I have hands-on experience with HTML, CSS, JavaScript,
+            React, and UI frameworks like Material UI (which I used to build
+            this portfolio), ensuring seamless design-to-development handoffs.
+            Fluent in Spanish and English (with basic Italian), I bring strong
+            collaboration skills and a global perspective to every digital
+            product I touch.
           </Typography>
-          <Typography sx={{ marginBottom: 2 }}>
-            As I have always been passionate about solving logic problems, I
-            decided to study Front-End Development at ADA ITW in Argentina. I
-            have experience in HTML, CSS, JavaScript, GIT, React, and CSS
-            frameworks for JS vanilla and for React (like Material UI, the one
-            I'm using on this portfolio).
-          </Typography>
-          <Typography sx={{ marginBottom: 5 }}>
-            Besides that, on my previous job I got valuable soft skills that
-            contribute to my overall performance with people and projects. Also
-            I'm fluent in Spanish and English, with basic Italian.
-          </Typography>
+
           <Box
             sx={{
               display: "flex",
@@ -62,32 +59,6 @@ function About({ id }) {
             }}
           >
             <Img src="src\assets\Image-71.jpg" />
-          </Box>
-
-          <Box>
-            <Typography
-              variant="h5"
-              sx={{
-                marginBottom: 3,
-              }}
-            >
-              Skills
-            </Typography>
-
-            <Box
-              sx={{
-                width: "100%",
-                display: "flex",
-                justifyContent: "center",
-
-                alignItems: "center",
-              }}
-            >
-              <img
-                src="https://skillicons.dev/icons?i=git,css,typescript,js,materialui,react,firebase,photoshop,premiere,figma,azure,tailwind,github,angular&perline=7"
-                style={{ width: "70%" }}
-              />
-            </Box>
           </Box>
         </Box>
         <Box sx={{ flex: "1 1 300px" }}>

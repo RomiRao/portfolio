@@ -10,42 +10,19 @@ import {
   Stack,
 } from "@mui/material";
 import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstructions";
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
-import Slider from "react-slick";
-import { useEffect } from "react";
-import { useFadeIn } from "../../hooks/useFadeIn";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import { useEffect, useRef } from "react";
+import gsap from "gsap";
+import { Draggable } from "gsap/Draggable";
+
+gsap.registerPlugin(Draggable);
 
 function Front({ id }) {
-  const { ref, style } = useFadeIn({ delay: 200 });
-  const settings = {
-    className: "center",
-    centerPadding: "60px",
-    centerMode: true,
-    dots: false,
-    infinite: true,
-    speed: 500,
-    slidesToShow: 2,
-    slidesToScroll: 1,
-    initialSlide: 0,
-    responsive: [
-      {
-        breakpoint: 600,
-        settings: {
-          slidesToShow: 2,
-          slidesToScroll: 2,
-          initialSlide: 2,
-        },
-      },
-      {
-        breakpoint: 480,
-        settings: {
-          slidesToShow: 1,
-          slidesToScroll: 1,
-        },
-      },
-    ],
-  };
+  const galleryRef = useRef(null);
+  const trackRef = useRef(null);
+  const prevBtnRef = useRef(null);
+  const nextBtnRef = useRef(null);
 
   const projects = [
     {
@@ -132,24 +109,141 @@ function Front({ id }) {
     },
   ];
 
-  // useEffect(() => {
-  //   if (navigator.mediaDevices?.getUserMedia) {
-  //     navigator.mediaDevices
-  //       .getUserMedia({ video: true, audio: true })
-  //       .then((stream) => {
-  //         const video = document.querySelector("video");
-  //         if (video) {
-  //           video.srcObject = stream;
-  //         }
-  //       })
-  //       .catch((err) => {
-  //         console.error("Failed to access media devices:", err);
-  //       });
-  //   }
-  // }, []);
+  useEffect(() => {
+    const cards = gsap.utils.toArray(trackRef.current.children);
+    const spacing = 0.15; // separación temporal entre cards (stagger)
+    const snapTime = gsap.utils.snap(spacing);
+
+    gsap.set(cards, { xPercent: 400, opacity: 0, scale: 0 });
+
+    // anima cada card: aparece con scale/opacity y se desplaza de derecha a izquierda
+    const animateFunc = (element) => {
+      const tl = gsap.timeline();
+      tl.fromTo(
+        element,
+        { scale: 0, opacity: 0 },
+        {
+          scale: 1,
+          opacity: 1,
+          zIndex: 100,
+          duration: 0.5,
+          yoyo: true,
+          repeat: 1,
+          ease: "power1.in",
+          immediateRender: false,
+        },
+      ).fromTo(
+        element,
+        { xPercent: 400 },
+        { xPercent: -400, duration: 1, ease: "none", immediateRender: false },
+        0,
+      );
+      return tl;
+    };
+
+    // arma un timeline que loopea infinitamente sin "salto" visible
+    function buildSeamlessLoop(items, spacing, animateFunc) {
+      const overlap = Math.ceil(1 / spacing);
+      const startTime = items.length * spacing + 0.5;
+      const loopTime = (items.length + overlap) * spacing + 1;
+      const rawSequence = gsap.timeline({ paused: true });
+      const seamlessLoop = gsap.timeline({
+        paused: true,
+        repeat: -1,
+        onRepeat() {
+          if (this._time === this._dur) this._tTime += this._dur - 0.01;
+        },
+      });
+      const l = items.length + overlap * 2;
+      let time, i, index;
+
+      for (i = 0; i < l; i++) {
+        index = i % items.length;
+        time = i * spacing;
+        rawSequence.add(animateFunc(items[index]), time);
+      }
+
+      rawSequence.time(startTime);
+      seamlessLoop
+        .to(rawSequence, {
+          time: loopTime,
+          duration: loopTime - startTime,
+          ease: "none",
+        })
+        .fromTo(
+          rawSequence,
+          { time: overlap * spacing + 1 },
+          {
+            time: startTime,
+            duration: startTime - (overlap * spacing + 1),
+            immediateRender: false,
+            ease: "none",
+          },
+        );
+      return seamlessLoop;
+    }
+
+    const seamlessLoop = buildSeamlessLoop(cards, spacing, animateFunc);
+    const playhead = { offset: 0 };
+    const wrapTime = gsap.utils.wrap(0, seamlessLoop.duration());
+
+    const scrub = gsap.to(playhead, {
+      offset: 0,
+      onUpdate() {
+        seamlessLoop.time(wrapTime(playhead.offset));
+      },
+      duration: 0.5,
+      ease: "power3",
+      paused: true,
+    });
+
+    function scrollToOffset(offset) {
+      const snappedTime = snapTime(offset);
+      scrub.vars.offset = snappedTime;
+      scrub.invalidate().restart();
+    }
+
+    const handleNext = () => scrollToOffset(scrub.vars.offset + spacing);
+    const handlePrev = () => scrollToOffset(scrub.vars.offset - spacing);
+
+    prevBtnRef.current?.addEventListener("click", handlePrev);
+    nextBtnRef.current?.addEventListener("click", handleNext);
+
+    // proxy invisible para permitir drag (mouse y touch) sobre las cards
+    const dragProxy = document.createElement("div");
+    dragProxy.style.visibility = "hidden";
+    dragProxy.style.position = "absolute";
+    galleryRef.current.appendChild(dragProxy);
+
+    const [draggable] = Draggable.create(dragProxy, {
+      type: "x",
+      trigger: trackRef.current,
+      onPress() {
+        this.startOffset = scrub.vars.offset;
+      },
+      onDrag() {
+        scrub.vars.offset = this.startOffset + (this.startX - this.x) * 0.001;
+        scrub.invalidate().restart();
+      },
+      onDragEnd() {
+        scrollToOffset(scrub.vars.offset);
+      },
+    });
+
+    scrollToOffset(0);
+
+    return () => {
+      prevBtnRef.current?.removeEventListener("click", handlePrev);
+      nextBtnRef.current?.removeEventListener("click", handleNext);
+      draggable.kill();
+      seamlessLoop.kill();
+      scrub.kill();
+      dragProxy.remove();
+    };
+  }, []);
 
   return (
-    <section id={id} ref={ref} style={{ ...style, scrollMarginTop: "64px" }}>
+    <section id={id}>
       <Box
         sx={{
           width: "100%",
@@ -157,25 +251,40 @@ function Front({ id }) {
           justifyContent: "center",
           flexDirection: "column",
           alignItems: "center",
-          borderWidth: 2,
-          borderColor: "red",
         }}
       >
-        {/* <video autoPlay controls></video> */}
-        <Box sx={{ maxWidth: 750 }}>
-          <Box sx={{ display: "flex", alignItems: "center", marginBottom: 5 }}>
-            <IntegrationInstructionsIcon sx={{ marginRight: 2 }} />
-            <Typography variant="h4">Front-End Projects</Typography>
-          </Box>
-          <div className="slider-container">
-            <Slider {...settings}>
+        <Box sx={{ maxWidth: 900, width: "100%" }}>
+          <Box
+            ref={galleryRef}
+            sx={{
+              position: "relative",
+              width: "100%",
+              height: 480,
+              overflow: "hidden",
+              userSelect: "none",
+            }}
+          >
+            <Box
+              ref={trackRef}
+              sx={{
+                position: "absolute",
+                width: 300,
+                height: 430,
+                top: "42%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+              }}
+            >
               {projects.map((project) => (
                 <Card
                   key={project.title}
                   sx={{
-                    maxWidth: 300,
-                    m: 3,
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: 300,
                     height: 430,
+                    boxShadow: 6,
                   }}
                 >
                   <CardMedia
@@ -205,23 +314,40 @@ function Front({ id }) {
                   </CardContent>
 
                   <CardActions>
-                    {project.repository && (
-                      <Button
-                        size="small"
-                        href={project.repository}
-                        target="_blank"
-                      >
-                        Repository
-                      </Button>
-                    )}
                     <Button size="small" href={project.deploy} target="_blank">
-                      Deploy
+                      View project
                     </Button>
                   </CardActions>
                 </Card>
               ))}
-            </Slider>
-          </div>
+            </Box>
+
+            <Stack
+              direction="row"
+              spacing={2}
+              sx={{
+                position: "absolute",
+                bottom: 16,
+                left: "50%",
+                transform: "translateX(-50%)",
+              }}
+            >
+              <Button
+                ref={prevBtnRef}
+                variant="outlined"
+                startIcon={<ChevronLeftIcon />}
+              >
+                Prev
+              </Button>
+              <Button
+                ref={nextBtnRef}
+                variant="contained"
+                endIcon={<ChevronRightIcon />}
+              >
+                Next
+              </Button>
+            </Stack>
+          </Box>
         </Box>
       </Box>
     </section>

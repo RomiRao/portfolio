@@ -13,12 +13,27 @@ import {
   ListItemText,
   Typography,
 } from "@mui/material";
-import { useFadeIn } from "../../hooks/useFadeIn";
 
 function Contact({ id }) {
-  const { ref, style } = useFadeIn({ delay: 200 });
+  // Estilos compartidos para los botones para mantener el código DRY
+  const buttonSx = {
+    borderRadius: 2,
+    "&:hover": {
+      backgroundColor: "primary.main",
+      color: "primary.contrastText",
+      "& .MuiListItemIcon-root": {
+        color: "primary.contrastText",
+      },
+    },
+  };
+
+  // Estilo compartido para reducir el espacio del icono al texto
+  const iconSx = {
+    minWidth: "38px",
+  };
+
   return (
-    <section id={id} ref={ref} style={{ ...style, scrollMarginTop: "64px" }}>
+    <section id={id}>
       <Box
         sx={{
           width: "100%",
@@ -26,51 +41,73 @@ function Contact({ id }) {
           flexDirection: "column",
           alignItems: "center",
           marginBottom: 30,
+          gap: 5,
+          backgroundColor: "fondoTarjetitas.fondo",
+          py: 5,
+          border: "1px solid",
+          borderColor: "fondoTarjetitas.borde",
+          boxShadow: `0px 2px 14px 10px fondoTarjetitas.sombra`,
+          borderRadius: "20px",
         }}
       >
-        <Box
+        <Typography variant="h5">
+          Please do not hesitate on contact me!
+        </Typography>
+
+        <List
           sx={{
             display: "flex",
-            alignItems: "center",
-            marginBottom: 3,
-            justifySelf: "left",
+            gap: 10,
+            flexWrap: "wrap",
+            justifyContent: "center",
           }}
         >
-          <AlternateEmailIcon sx={{ marginRight: 2 }} />
-          <Typography variant="h4">Contact</Typography>
-        </Box>
-        <Typography>Please do not hesitate on contact me!</Typography>
-        <List>
-          <ListItem disablePadding>
-            <ListItemButton>
-              <ListItemIcon>
-                <GitHubIcon />
-              </ListItemIcon>
-              <ListItemText primary="RomiRao" />
-            </ListItemButton>
-          </ListItem>
-          <ListItem disablePadding>
-            <ListItemButton>
-              <ListItemIcon>
+          {/* BOTÓN DE EMAIL */}
+          <ListItem disablePadding sx={{ width: "auto" }}>
+            <ListItemButton
+              component="a"
+              href="mailto:rominarao96@gmail.com" // Abre directamente el gestor de correo del usuario
+              sx={buttonSx}
+            >
+              <ListItemIcon sx={iconSx}>
                 <EmailIcon />
               </ListItemIcon>
               <ListItemText primary="rominarao96@gmail.com" />
             </ListItemButton>
           </ListItem>
-          <ListItem disablePadding>
-            <ListItemButton>
-              <ListItemIcon>
-                <LinkedInIcon />
-              </ListItemIcon>
-              <ListItemText primary="Romina Yazmín Rao" />
-            </ListItemButton>
-          </ListItem>
-          <ListItem disablePadding>
-            <ListItemButton>
-              <ListItemIcon>
+
+          {/* BOTÓN DE BEHANCE */}
+          <ListItem disablePadding sx={{ width: "auto" }}>
+            <ListItemButton
+              component="a"
+              href="https://www.behance.net/rominayazmnrao" // <-- REEMPLAZA ESTO
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={buttonSx}
+            >
+              <ListItemIcon sx={iconSx}>
                 <ImageIcon />
               </ListItemIcon>
               <ListItemText primary="Behance" />
+            </ListItemButton>
+          </ListItem>
+
+          {/* BOTÓN DE LINKEDIN */}
+          <ListItem disablePadding sx={{ width: "auto" }}>
+            <ListItemButton
+              component="a"
+              href="https://www.linkedin.com/in/romina-rao-50a61a1ba/"
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={buttonSx}
+            >
+              <ListItemIcon sx={iconSx}>
+                <LinkedInIcon />
+              </ListItemIcon>
+              <ListItemText
+                primary="Romina Yazmín Rao"
+                primaryTypographyProps={{ whiteSpace: "nowrap" }}
+              />
             </ListItemButton>
           </ListItem>
         </List>
