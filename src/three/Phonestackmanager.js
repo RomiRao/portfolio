@@ -1,3 +1,4 @@
+import gsap from "gsap";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
@@ -75,14 +76,12 @@ export const DEFAULT_CAM_SETTINGS = {
   endCamRotZ: 0.0,
 };
 
-const RENDER_PIXEL_RATIO = () =>
-  Math.min(Math.max(window.devicePixelRatio, 2), 3);
+const RENDER_PIXEL_RATIO = () => Math.min(window.devicePixelRatio || 1, 2);
 
 let renderer = null;
 let canvas = null;
 let pmrem = null;
 let envTexture = null;
-let rafId = null;
 let listenersBound = false;
 
 const loader = new GLTFLoader();
@@ -90,6 +89,12 @@ const textureLoader = new THREE.TextureLoader();
 const baseModelPromises = new Map(); // modelUrl -> Promise<{ baseModel, origColors, size, baseCamDist }>
 const scenesById = new Map(); // id -> sceneData
 const resizeObservers = new Map(); // id -> ResizeObserver
+const viewerElements = new Map(); // id -> element (tracked independent of model-load completion)
+const elementToId = new WeakMap(); // element -> id (for IO callback -> id lookup)
+const visibleIds = new Set(); // ids currently intersecting (with rootMargin buffer)
+let visibilityObserver = null;
+
+const VISIBILITY_ROOT_MARGIN_PX = 200; // buffer so cards render slightly before entering view
 
 function ensureRenderer() {
   if (renderer) return;
@@ -127,7 +132,26 @@ function ensureRenderer() {
     listenersBound = true;
   }
 
-  animate();
+  // Ride GSAP's own ticker instead of a separate requestAnimationFrame chain
+  // so this runs in the same tick, after ScrollTrigger's scroll-driven
+  // transforms land — otherwise the two independently-scheduled rAF loops
+  // race and this can read a stale (pre-transform) element rect.
+  gsap.ticker.add(animate);
+}
+
+function ensureVisibilityObserver() {
+  if (visibilityObserver) return;
+  visibilityObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        const id = elementToId.get(entry.target);
+        if (!id) return;
+        if (entry.isIntersecting) visibleIds.add(id);
+        else visibleIds.delete(id);
+      });
+    },
+    { rootMargin: `${VISIBILITY_ROOT_MARGIN_PX}px 0px` },
+  );
 }
 
 function handleWindowResize() {
@@ -300,13 +324,23 @@ function buildScene(config, modelData) {
             { bg, title, sub, isSecondary },
             screenMesh.material.map,
           );
-      screenMesh.material.map = screenTex;
-      screenMesh.material.emissive.set(0x000000);
-      screenMesh.material.emissiveMap = null;
-      screenMesh.material.emissiveIntensity = 0;
+      // A phone screen emits its own light rather than reflecting the
+      // scene's studio lights — put the texture on the emissive channel
+      // (not the diffuse map) and zero out the base color, so the
+      // ambient/directional lights don't wash it out with extra
+      // reflected light on top of what the screenshot already shows.
+      screenMesh.material.map = null;
+      screenMesh.material.color.set(0x000000);
+      screenMesh.material.emissive.set(0xffffff);
+      screenMesh.material.emissiveMap = screenTex;
+      screenMesh.material.emissiveIntensity = 1;
       screenMesh.material.metalness = 0;
-      screenMesh.material.roughness = 0.8;
+      screenMesh.material.roughness = 1;
       screenMesh.material.envMapIntensity = 0;
+      // Show the screenshot's colors as authored, not run through the
+      // scene's ACES tone-mapping curve (that's for lit surfaces, not a
+      // UI screenshot being displayed on a "screen").
+      screenMesh.material.toneMapped = false;
       screenMesh.material.needsUpdate = true;
     }
 
@@ -380,8 +414,28 @@ function disposeScene(data) {
 // ─── Public API ────────────────────────────────────────────────────────────
 export function registerViewer(config) {
   ensureRenderer();
+  ensureVisibilityObserver();
 
   const { id, element, modelUrl, meshMap } = config;
+
+  viewerElements.set(id, element);
+  elementToId.set(element, id);
+  visibilityObserver.observe(element);
+
+  // Seed synchronously so a viewer that's already on-screen at registration
+  // (e.g. the first card visible on initial load) isn't skipped for the one
+  // or two frames before IntersectionObserver's async first callback lands.
+  // IO's own callback will correct/confirm this immediately after.
+  const seedRect = element.getBoundingClientRect();
+  const margin = VISIBILITY_ROOT_MARGIN_PX;
+  if (
+    seedRect.bottom >= -margin &&
+    seedRect.top <= window.innerHeight + margin &&
+    seedRect.right >= -margin &&
+    seedRect.left <= window.innerWidth + margin
+  ) {
+    visibleIds.add(id);
+  }
 
   loadBaseModel(modelUrl, meshMap.hiddenMeshes, meshMap.tintMeshes).then(
     (modelData) => {
@@ -405,12 +459,16 @@ export function unregisterViewer(id) {
     disposeScene(data);
     scenesById.delete(id);
   }
+
+  const element = viewerElements.get(id);
+  if (element && visibilityObserver) visibilityObserver.unobserve(element);
+  viewerElements.delete(id);
+  visibleIds.delete(id);
 }
 
 // ─── Render loop (viewport-scissors each visible card, same as the POC) ─────
 function animate() {
-  rafId = requestAnimationFrame(animate);
-  if (!renderer) return;
+  if (!renderer || visibleIds.size === 0) return;
 
   renderer.setClearColor(0x000000, 0);
   renderer.setScissorTest(false);
@@ -425,16 +483,9 @@ function animate() {
   const clearedGroupsThisFrame = new Set();
 
   scenesById.forEach((data) => {
-    const rect = data.element.getBoundingClientRect();
-    if (
-      rect.bottom < 0 ||
-      rect.top > window.innerHeight ||
-      rect.right < 0 ||
-      rect.left > window.innerWidth
-    ) {
-      return;
-    }
+    if (!visibleIds.has(data.id)) return;
 
+    const rect = data.element.getBoundingClientRect();
     const width = rect.right - rect.left;
     const height = rect.bottom - rect.top;
     const left = rect.left;

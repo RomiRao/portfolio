@@ -99,9 +99,17 @@ function App() {
           y: `-${speed * 200}vh`, // Desplaza hacia arriba en vh, proporcional a su velocidad
           ease: "none",
           scrollTrigger: {
-            trigger: "body", // Animación ligada al scroll completo del sitio
+            // Ligada solo al alto del header: es la única sección con fondo
+            // transparente donde estas capas fijas se ven (el resto de
+            // secciones tiene un bgcolor opaco encima). Si el trigger fuera
+            // "body" (todo el documento), haría falta scrollear gran parte
+            // de la página entera para que una capa como fondo-4 (con su
+            // contenido cerca del borde inferior de la imagen) llegue a
+            // encuadrarse — para entonces el header ya quedó atrás y su
+            // fondo transparente con él.
+            trigger: "#home",
             start: "top top",
-            end: "bottom bottom",
+            end: "bottom top",
             scrub: true, // Sincroniza la posición directamente con la barra de scroll
           },
         });
@@ -239,27 +247,12 @@ function App() {
             <Front />
           </Container>
         </Box>
-
         {/* ABOUT ME */}
         <Box id="about" sx={{ scrollMarginTop: "64px" }}>
           <Container maxWidth="lg">
-            <Box
-              className="scroll-title"
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                marginBottom: 5,
-                justifyContent: "flex-start",
-              }}
-            >
-              <Typography variant="h3" fontWeight="bold">
-                About Me
-              </Typography>
-            </Box>
             <About />
           </Container>
         </Box>
-
         {/* CONTACT */}
         <Box id="contact" sx={{ scrollMarginTop: "64px" }}>
           <Container maxWidth="lg">

@@ -83,21 +83,6 @@ const projects = [
     sub: "Pausa",
     type: "phone",
   },
-  {
-    id: 3,
-    category: "UX Design",
-    role: "Mobile App",
-    title: "Nanzas",
-    description:
-      "Designed a personal finance app from scratch mobile and web, covering the full product cycle from UX research and wireframing to a fully responsive React interface prototype.",
-    link: "/project/nanzas",
-    backgroundImage: portadaNanzasFondo,
-    screens: [screenNanzas1, screenNanzas2],
-    bg: "#1f4e3d",
-    tint: "#14261d",
-    sub: "Nanzas",
-    type: "phone",
-  },
 ];
 
 // ─── Meta chips ───────────────────────────────────────────────────────────────

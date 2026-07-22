@@ -30,7 +30,7 @@ export function ThemeProviderCustom({ children }) {
     palette: {
       mode: darkMode ? "dark" : "light",
       primary: {
-        main: darkMode ? "#78a940" : "#3e680d",
+        main: darkMode ? "#50689C" : "#374b77",
       },
       secondary: {
         main: darkMode ? "#28dacb" : "#0d6768",

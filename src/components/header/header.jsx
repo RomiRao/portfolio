@@ -26,17 +26,19 @@ function Header({ id }) {
       ease: "power2.out",
     });
 
-    // 2. Animamos la tercera línea justificando sus caracteres con Flexbox
-    // Usamos type: "words, chars" para poder darle el espacio a los caracteres individuales
+    // 2. Animamos la tercera línea justificando sus PALABRAS con Flexbox
+    // type: "words, chars" anida cada palabra en su propio contenedor, así
+    // el flexbox de abajo separa esas palabras entre sí sin tocar el
+    // espaciado de las letras dentro de cada una.
     const splitThird = new SplitText(
       textRef.current.querySelector(".third-line"),
       {
-        type: "chars",
+        type: "words, chars",
         charsClass: "justified-char",
       },
     );
 
-    // Truco: Aplicamos flexbox al contenedor para que distribuya los caracteres de extremo a extremo
+    // Truco: Aplicamos flexbox al contenedor para que distribuya las palabras de extremo a extremo
     gsap.set(textRef.current.querySelector(".third-line"), {
       display: "flex",
       justifyContent: "space-between",
@@ -109,15 +111,17 @@ function Header({ id }) {
 
         <Typography
           sx={{
-            fontSize: 30,
+            fontSize: 40,
             lineHeight: 1,
             marginTop: "0.2em", // Ajuste fino manual para pegarlo al nombre
-            wordSpacing: "0.5em",
+            wordSpacing: "0em",
+            textAlign: "center",
+            width: "100%",
           }}
           color="inherit"
           className="third-line"
         >
-          UX Designer, Artist and Developer.
+          UX/UI Designer, Artist and Developer.
         </Typography>
       </Box>
     </Box>
