@@ -13,7 +13,7 @@ const projects = [
     title: "Movies Browser",
     description:
       "On this project I applied all the knowledge from ADA ITW FrontEnd Developer Career.",
-    img: "../../../public/assets-front/movie.png",
+    img: "/assets-front/movie.png",
     repository: "https://github.com/RomiRao/movies/tree/main",
     deploy: "https://movies-browser-omega.vercel.app/",
     tags: ["ReactJS", "MaterialUI", "JavaScript", "tmdb", "Vercel", "GIT"],
@@ -22,7 +22,7 @@ const projects = [
     title: "AhorrADAs",
     description:
       "A virtual wallet to register money movements using localstorage.",
-    img: "../../../public/assets-front/ahorradas.png",
+    img: "/assets-front/ahorradas.png",
     repository: "https://github.com/RomiRao/ahorrADAs-marce-romi",
     deploy: "https://romirao.github.io/ahorrADAs-marce-romi/",
     tags: ["HTML", "CSS", "JavaScript", "GIT"],
@@ -30,7 +30,7 @@ const projects = [
   {
     title: "Royal Caribbean Jobs",
     description: "For this project I learned how to use an API with MockAPI",
-    img: "../../../public/assets-front/RoyalCar.png",
+    img: "/assets-front/RoyalCar.png",
     repository: "https://github.com/RomiRao/jobs",
     deploy: "https://romirao.github.io/jobs/",
     tags: ["HTML", "CSS", "Bootstrap", "APIREST", "JavaScript", "GIT"],
@@ -38,7 +38,7 @@ const projects = [
   {
     title: "Readme - Ecommerce",
     description: "Just a small project to show skills between ecommerce.",
-    img: "../../../public/assets-front/readMe.png",
+    img: "/assets-front/readMe.png",
     repository: "https://github.com/RomiRao/READ-ME",
     deploy: "https://read-me-five.vercel.app/",
     tags: [
@@ -54,7 +54,7 @@ const projects = [
   {
     title: "ToDo App",
     description: "Just a simple ToDo app, done with react and Materiaul UI.",
-    img: "../../../public/assets-front/toDo.png",
+    img: "/assets-front/toDo.png",
     repository: "https://github.com/RomiRao/AdaTasks",
     deploy: "https://ada-tasks.vercel.app/",
     tags: [
@@ -69,7 +69,7 @@ const projects = [
   {
     title: "Meme Generator",
     description: "A fun project using JavaScript for the first time!",
-    img: "../../../public/assets-front/meme.png",
+    img: "/assets-front/meme.png",
     repository: "https://github.com/RomiRao/meme-generator",
     deploy: "https://romirao.github.io/meme-generator/",
     tags: ["HTML", "CSS", "JavaScript", "GIT"],
@@ -78,7 +78,7 @@ const projects = [
     title: "Choppify",
     description:
       "Just a very small project playing with javascript. To create your own Chopper.",
-    img: "../../../public/assets-front/choppify.png",
+    img: "/assets-front/choppify.png",
     repository: "https://github.com/RomiRao/choppify",
     deploy: "https://romirao.github.io/choppify/",
     tags: ["HTML", "CSS", "JavaScript", "GIT"],
@@ -86,7 +86,7 @@ const projects = [
   {
     title: "Restaurant Landing Page",
     description: "A smal landing page done in one day.",
-    img: "../../../public/assets-front/landing.png",
+    img: "/assets-front/landing.png",
     repository: "https://github.com/RomiRao/prueba-landing-page",
     deploy: "https://prueba-landing-page.vercel.app/",
     tags: ["ReactJS", "MaterialUI", "JavaScript", "Vercel", "GIT"],
