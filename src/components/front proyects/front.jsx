@@ -1,354 +1,380 @@
-import {
-  Box,
-  Typography,
-  Card,
-  CardMedia,
-  CardContent,
-  CardActions,
-  Button,
-  Chip,
-  Stack,
-} from "@mui/material";
-import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstructions";
+import { Box, Typography, IconButton } from "@mui/material";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import { useEffect, useRef } from "react";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
-import { Draggable } from "gsap/Draggable";
 
-gsap.registerPlugin(Draggable);
+// How many cards behind the active one stay visible, fanned out.
+const STACK_DEPTH = 3;
+
+const projects = [
+  {
+    title: "Movies Browser",
+    description:
+      "On this project I applied all the knowledge from ADA ITW FrontEnd Developer Career.",
+    img: "../../../public/assets-front/movie.png",
+    repository: "https://github.com/RomiRao/movies/tree/main",
+    deploy: "https://movies-browser-omega.vercel.app/",
+    tags: ["ReactJS", "MaterialUI", "JavaScript", "tmdb", "Vercel", "GIT"],
+  },
+  {
+    title: "AhorrADAs",
+    description:
+      "A virtual wallet to register money movements using localstorage.",
+    img: "../../../public/assets-front/ahorradas.png",
+    repository: "https://github.com/RomiRao/ahorrADAs-marce-romi",
+    deploy: "https://romirao.github.io/ahorrADAs-marce-romi/",
+    tags: ["HTML", "CSS", "JavaScript", "GIT"],
+  },
+  {
+    title: "Royal Caribbean Jobs",
+    description: "For this project I learned how to use an API with MockAPI",
+    img: "../../../public/assets-front/RoyalCar.png",
+    repository: "https://github.com/RomiRao/jobs",
+    deploy: "https://romirao.github.io/jobs/",
+    tags: ["HTML", "CSS", "Bootstrap", "APIREST", "JavaScript", "GIT"],
+  },
+  {
+    title: "Readme - Ecommerce",
+    description: "Just a small project to show skills between ecommerce.",
+    img: "../../../public/assets-front/readMe.png",
+    repository: "https://github.com/RomiRao/READ-ME",
+    deploy: "https://read-me-five.vercel.app/",
+    tags: [
+      "ReactJS",
+      "MaterialUI",
+      "JavaScript",
+      "tmdb",
+      "Vercel",
+      "GIT",
+      "Firebase",
+    ],
+  },
+  {
+    title: "ToDo App",
+    description: "Just a simple ToDo app, done with react and Materiaul UI.",
+    img: "../../../public/assets-front/toDo.png",
+    repository: "https://github.com/RomiRao/AdaTasks",
+    deploy: "https://ada-tasks.vercel.app/",
+    tags: [
+      "ReactJS",
+      "localStorage",
+      "JavaScript",
+      "MaterialUI",
+      "Vercel",
+      "GIT",
+    ],
+  },
+  {
+    title: "Meme Generator",
+    description: "A fun project using JavaScript for the first time!",
+    img: "../../../public/assets-front/meme.png",
+    repository: "https://github.com/RomiRao/meme-generator",
+    deploy: "https://romirao.github.io/meme-generator/",
+    tags: ["HTML", "CSS", "JavaScript", "GIT"],
+  },
+  {
+    title: "Choppify",
+    description:
+      "Just a very small project playing with javascript. To create your own Chopper.",
+    img: "../../../public/assets-front/choppify.png",
+    repository: "https://github.com/RomiRao/choppify",
+    deploy: "https://romirao.github.io/choppify/",
+    tags: ["HTML", "CSS", "JavaScript", "GIT"],
+  },
+  {
+    title: "Restaurant Landing Page",
+    description: "A smal landing page done in one day.",
+    img: "../../../public/assets-front/landing.png",
+    repository: "https://github.com/RomiRao/prueba-landing-page",
+    deploy: "https://prueba-landing-page.vercel.app/",
+    tags: ["ReactJS", "MaterialUI", "JavaScript", "Vercel", "GIT"],
+  },
+];
+
+// The active card is a wide rectangle on larger screens, but square on
+// mobile; cards behind it are smaller squares, fanned out in their own row
+// below it.
+const ASPECT = 2.3;
+const ASPECT_MOBILE = 1;
+const STACK_FRACTION = 0.26; // stack card side, as a fraction of the front card's width
+const STACK_GAP = 56; // px between the front card's bottom and the stack row
+const FAN_X_MULT = [-1, 0, 1];
+const FAN_ROTATE = [-8, 0, 8];
+const FAN_Y_JITTER = [10, 0, 10];
+
+// Where/how big a card is, keyed by its distance behind the active card
+// (0 = front). `stageWidth` is the measured pixel width of the front card.
+function geometry(depth, stageWidth, aspect) {
+  const frontHeight = stageWidth / aspect;
+  const stackSize = stageWidth * STACK_FRACTION;
+
+  if (depth === 0) {
+    return {
+      width: stageWidth,
+      height: frontHeight,
+      x: 0,
+      y: 0,
+      rotate: 0,
+      opacity: 1,
+      zIndex: projects.length,
+    };
+  }
+  if (depth > STACK_DEPTH) {
+    return {
+      width: stackSize,
+      height: stackSize,
+      x: (stageWidth - stackSize) / 2,
+      y: frontHeight + STACK_GAP,
+      rotate: 0,
+      opacity: 0,
+      zIndex: 0,
+    };
+  }
+  const slot = depth - 1;
+  return {
+    width: stackSize,
+    height: stackSize,
+    x: (stageWidth - stackSize) / 2 + FAN_X_MULT[slot] * stackSize * 0.4,
+    y: frontHeight + STACK_GAP + FAN_Y_JITTER[slot],
+    rotate: FAN_ROTATE[slot],
+    opacity: 1,
+    zIndex: projects.length - depth,
+  };
+}
 
 function Front({ id }) {
-  const galleryRef = useRef(null);
-  const trackRef = useRef(null);
-  const prevBtnRef = useRef(null);
-  const nextBtnRef = useRef(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [stageWidth, setStageWidth] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+  const aspect = isMobile ? ASPECT_MOBILE : ASPECT;
+  const stageRef = useRef(null);
+  const cardRefs = useRef([]);
+  cardRefs.current = [];
+  const addCardRef = (el) => {
+    if (el && !cardRefs.current.includes(el)) cardRefs.current.push(el);
+  };
+  const isFirstActiveRender = useRef(true);
 
-  const projects = [
-    {
-      title: "Movies Browser",
-      description:
-        "On this project I applied all the knowledge from ADA ITW FrontEnd Developer Career.",
-      img: "../../../public/assets-front/movie.png",
-      repository: "https://github.com/RomiRao/movies/tree/main",
-      deploy: "https://movies-browser-omega.vercel.app/",
-      tags: ["ReactJS", "MaterialUI", "JavaScript", "tmdb", "Vercel", "GIT"],
-    },
-    {
-      title: "AhorrADAs",
-      description:
-        "A virtual wallet to register money movements using localstorage.",
-      img: "../../../public/assets-front/ahorradas.png",
-      repository: "https://github.com/RomiRao/ahorrADAs-marce-romi",
-      deploy: "https://romirao.github.io/ahorrADAs-marce-romi/",
-      tags: ["HTML", "CSS", "JavaScript", "GIT"],
-    },
-    {
-      title: "Royal Caribbean Jobs",
-      description: "For this project I learned how to use an API with MockAPI",
-      img: "../../../public/assets-front/RoyalCar.png",
-      repository: "https://github.com/RomiRao/jobs",
-      deploy: "https://romirao.github.io/jobs/",
-      tags: ["HTML", "CSS", "Bootstrap", "APIREST", "JavaScript", "GIT"],
-    },
-    {
-      title: "Readme - Ecommerce",
-      description: "Just a small project to show skills between ecommerce.",
-      img: "../../../public/assets-front/readMe.png",
-      repository: "https://github.com/RomiRao/READ-ME",
-      deploy: "https://read-me-five.vercel.app/",
-      tags: [
-        "ReactJS",
-        "MaterialUI",
-        "JavaScript",
-        "tmdb",
-        "Vercel",
-        "GIT",
-        "Firebase",
-      ],
-    },
-    {
-      title: "ToDo App",
-      description: "Just a simple ToDo app, done with react and Materiaul UI.",
-      img: "../../../public/assets-front/toDo.png",
-      repository: "https://github.com/RomiRao/AdaTasks",
-      deploy: "https://ada-tasks.vercel.app/",
-      tags: [
-        "ReactJS",
-        "localStorage",
-        "JavaScript",
-        "MaterialUI",
-        "Vercel",
-        "GIT",
-      ],
-    },
-    {
-      title: "Meme Generator",
-      description: "A fun project using JavaScript for the first time!",
-      img: "../../../public/assets-front/meme.png",
-      repository: "https://github.com/RomiRao/meme-generator",
-      deploy: "https://romirao.github.io/meme-generator/",
-      tags: ["HTML", "CSS", "JavaScript", "GIT"],
-    },
-    {
-      title: "Choppify",
-      description:
-        "Just a very small project playing with javascript. To create your own Chopper.",
-      img: "../../../public/assets-front/choppify.png",
-      repository: "https://github.com/RomiRao/choppify",
-      deploy: "https://romirao.github.io/choppify/",
-      tags: ["HTML", "CSS", "JavaScript", "GIT"],
-    },
-    {
-      title: "Restaurant Landing Page",
-      description: "A smal landing page done in one day.",
-      img: "../../../public/assets-front/landing.png",
-      repository: "https://github.com/RomiRao/prueba-landing-page",
-      deploy: "https://prueba-landing-page.vercel.app/",
-      tags: ["ReactJS", "MaterialUI", "JavaScript", "Vercel", "GIT"],
-    },
-  ];
+  const depthOf = (index) =>
+    (index - activeIndex + projects.length) % projects.length;
 
   useEffect(() => {
-    const cards = gsap.utils.toArray(trackRef.current.children);
-    const spacing = 0.15; // separación temporal entre cards (stagger)
-    const snapTime = gsap.utils.snap(spacing);
-
-    gsap.set(cards, { xPercent: 400, opacity: 0, scale: 0 });
-
-    // anima cada card: aparece con scale/opacity y se desplaza de derecha a izquierda
-    const animateFunc = (element) => {
-      const tl = gsap.timeline();
-      tl.fromTo(
-        element,
-        { scale: 0, opacity: 0 },
-        {
-          scale: 1,
-          opacity: 1,
-          zIndex: 100,
-          duration: 0.5,
-          yoyo: true,
-          repeat: 1,
-          ease: "power1.in",
-          immediateRender: false,
-        },
-      ).fromTo(
-        element,
-        { xPercent: 400 },
-        { xPercent: -400, duration: 1, ease: "none", immediateRender: false },
-        0,
-      );
-      return tl;
-    };
-
-    // arma un timeline que loopea infinitamente sin "salto" visible
-    function buildSeamlessLoop(items, spacing, animateFunc) {
-      const overlap = Math.ceil(1 / spacing);
-      const startTime = items.length * spacing + 0.5;
-      const loopTime = (items.length + overlap) * spacing + 1;
-      const rawSequence = gsap.timeline({ paused: true });
-      const seamlessLoop = gsap.timeline({
-        paused: true,
-        repeat: -1,
-        onRepeat() {
-          if (this._time === this._dur) this._tTime += this._dur - 0.01;
-        },
-      });
-      const l = items.length + overlap * 2;
-      let time, i, index;
-
-      for (i = 0; i < l; i++) {
-        index = i % items.length;
-        time = i * spacing;
-        rawSequence.add(animateFunc(items[index]), time);
-      }
-
-      rawSequence.time(startTime);
-      seamlessLoop
-        .to(rawSequence, {
-          time: loopTime,
-          duration: loopTime - startTime,
-          ease: "none",
-        })
-        .fromTo(
-          rawSequence,
-          { time: overlap * spacing + 1 },
-          {
-            time: startTime,
-            duration: startTime - (overlap * spacing + 1),
-            immediateRender: false,
-            ease: "none",
-          },
-        );
-      return seamlessLoop;
-    }
-
-    const seamlessLoop = buildSeamlessLoop(cards, spacing, animateFunc);
-    const playhead = { offset: 0 };
-    const wrapTime = gsap.utils.wrap(0, seamlessLoop.duration());
-
-    const scrub = gsap.to(playhead, {
-      offset: 0,
-      onUpdate() {
-        seamlessLoop.time(wrapTime(playhead.offset));
-      },
-      duration: 0.5,
-      ease: "power3",
-      paused: true,
-    });
-
-    function scrollToOffset(offset) {
-      const snappedTime = snapTime(offset);
-      scrub.vars.offset = snappedTime;
-      scrub.invalidate().restart();
-    }
-
-    const handleNext = () => scrollToOffset(scrub.vars.offset + spacing);
-    const handlePrev = () => scrollToOffset(scrub.vars.offset - spacing);
-
-    prevBtnRef.current?.addEventListener("click", handlePrev);
-    nextBtnRef.current?.addEventListener("click", handleNext);
-
-    // proxy invisible para permitir drag (mouse y touch) sobre las cards
-    const dragProxy = document.createElement("div");
-    dragProxy.style.visibility = "hidden";
-    dragProxy.style.position = "absolute";
-    galleryRef.current.appendChild(dragProxy);
-
-    const [draggable] = Draggable.create(dragProxy, {
-      type: "x",
-      trigger: trackRef.current,
-      onPress() {
-        this.startOffset = scrub.vars.offset;
-      },
-      onDrag() {
-        scrub.vars.offset = this.startOffset + (this.startX - this.x) * 0.001;
-        scrub.invalidate().restart();
-      },
-      onDragEnd() {
-        scrollToOffset(scrub.vars.offset);
-      },
-    });
-
-    scrollToOffset(0);
-
-    return () => {
-      prevBtnRef.current?.removeEventListener("click", handlePrev);
-      nextBtnRef.current?.removeEventListener("click", handleNext);
-      draggable.kill();
-      seamlessLoop.kill();
-      scrub.kill();
-      dragProxy.remove();
-    };
+    const el = stageRef.current;
+    if (!el) return undefined;
+    const update = () => setStageWidth(el.clientWidth);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width:599.95px)");
+    setIsMobile(mq.matches);
+    const update = (e) => setIsMobile(e.matches);
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  // Snaps every card to its correct geometry — used on mount and whenever the
+  // stage is resized. Kills any in-flight tween first so a resize can't fight
+  // with the nav-triggered animation below.
+  useEffect(() => {
+    if (!stageWidth) return;
+    cardRefs.current.forEach((el, i) => {
+      const depth = depthOf(i);
+      const target = geometry(depth, stageWidth, aspect);
+      gsap.killTweensOf(el);
+      gsap.set(el, target);
+      const footer = el.querySelector(".card-footer");
+      if (footer) {
+        gsap.killTweensOf(footer);
+        gsap.set(footer, {
+          opacity: depth === 0 ? 1 : 0,
+          pointerEvents: depth === 0 ? "auto" : "none",
+        });
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stageWidth, aspect]);
+
+  useEffect(() => {
+    if (isFirstActiveRender.current) {
+      isFirstActiveRender.current = false;
+      return;
+    }
+    if (!stageWidth) return;
+    cardRefs.current.forEach((el, i) => {
+      const depth = depthOf(i);
+      const target = geometry(depth, stageWidth, aspect);
+      gsap.to(el, {
+        ...target,
+        duration: 0.6,
+        ease: "power3.out",
+      });
+      const footer = el.querySelector(".card-footer");
+      if (footer) {
+        gsap.to(footer, {
+          opacity: depth === 0 ? 1 : 0,
+          duration: 0.35,
+          ease: "power2.out",
+          onStart() {
+            if (depth === 0) footer.style.pointerEvents = "auto";
+          },
+          onComplete() {
+            if (depth !== 0) footer.style.pointerEvents = "none";
+          },
+        });
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeIndex]);
+
+  const handleNext = () => setActiveIndex((i) => (i + 1) % projects.length);
+  const handlePrev = () =>
+    setActiveIndex((i) => (i - 1 + projects.length) % projects.length);
+
+  const navButtonSx = {
+    width: { xs: 44, sm: 56, md: 64 },
+    height: { xs: 44, sm: 56, md: 64 },
+    flexShrink: 0,
+    color: "primary.main",
+    "&:hover": { bgcolor: "transparent", color: "primary.dark" },
+  };
+  const navIconSx = {
+    fontSize: { xs: 32, sm: 40, md: 48 },
+  };
 
   return (
     <section id={id}>
       <Box
         sx={{
           width: "100%",
+          maxWidth: "1300px",
+          mx: "auto",
           display: "flex",
           justifyContent: "center",
-          flexDirection: "column",
           alignItems: "center",
+          gap: { xs: 1, sm: 2, md: 4 },
+          px: { xs: 1, sm: 2 },
+          // The stacked cards below the active one are position:absolute, so
+          // they don't add to this box's own height — reserve real layout
+          // space for them here, or they'd visually overlap the next section.
+          pb: `${STACK_GAP + stageWidth * STACK_FRACTION + 24}px`,
         }}
       >
-        <Box sx={{ maxWidth: 900, width: "100%" }}>
-          <Box
-            ref={galleryRef}
-            sx={{
-              position: "relative",
-              width: "100%",
-              height: 480,
-              overflow: "hidden",
-              userSelect: "none",
-            }}
-          >
+        <IconButton onClick={handlePrev} sx={navButtonSx}>
+          <ChevronLeftIcon sx={navIconSx} />
+        </IconButton>
+
+        <Box
+          ref={stageRef}
+          sx={{
+            position: "relative",
+            width: "100%",
+            flex: 1,
+            minWidth: 0,
+            aspectRatio: { xs: `${ASPECT_MOBILE}`, sm: `${ASPECT}` },
+          }}
+        >
+          {projects.map((project, i) => {
+            const depth = depthOf(i);
+            const isStacked = depth > 0 && depth <= STACK_DEPTH;
+            return (
             <Box
-              ref={trackRef}
-              sx={{
+              key={project.title}
+              ref={addCardRef}
+              onClick={isStacked ? () => setActiveIndex(i) : undefined}
+              role={isStacked ? "button" : undefined}
+              tabIndex={isStacked ? 0 : undefined}
+              aria-label={isStacked ? `Show ${project.title}` : undefined}
+              onKeyDown={
+                isStacked
+                  ? (e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setActiveIndex(i);
+                      }
+                    }
+                  : undefined
+              }
+              sx={(theme) => ({
                 position: "absolute",
-                width: 300,
-                height: 430,
-                top: "42%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-              }}
+                top: 0,
+                left: 0,
+                borderRadius: "20px",
+                overflow: "hidden",
+                border: `1px solid ${theme.palette.fondoTarjetitas.borde}`,
+                boxShadow: 6,
+                cursor: isStacked ? "pointer" : "default",
+              })}
             >
-              {projects.map((project) => (
-                <Card
-                  key={project.title}
-                  sx={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: 300,
-                    height: 430,
-                    boxShadow: 6,
-                  }}
+              <Box
+                component="img"
+                src={project.img}
+                alt={project.title}
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  display: "block",
+                }}
+              />
+              <Box
+                className="card-footer"
+                sx={(theme) => ({
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  display: "flex",
+                  alignItems: "flex-end",
+                  justifyContent: "space-between",
+                  px: 2,
+                  pt: 5,
+                  pb: 1.25,
+                  background:
+                    theme.palette.mode === "dark"
+                      ? "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0) 100%)"
+                      : "linear-gradient(to top, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.5) 55%, rgba(255,255,255,0) 100%)",
+                })}
+              >
+                <Typography
+                  sx={(theme) => ({
+                    color: theme.palette.mode === "dark" ? "#fff" : "#000",
+                    fontWeight: 500,
+                  })}
                 >
-                  <CardMedia
-                    sx={{ height: 170 }}
-                    image={project.img}
-                    title={project.title}
-                  />
-                  <CardContent>
-                    <Typography gutterBottom variant="h5" component="div">
-                      {project.title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {project.description}
-                    </Typography>
-                    <Stack direction="row" mt={2} flexWrap="wrap">
-                      {project.tags.map((tag) => (
-                        <Chip
-                          key={tag}
-                          label={tag}
-                          color="primary"
-                          size="small"
-                          variant="filled"
-                          sx={{ mr: "4px", my: "4px" }}
-                        />
-                      ))}
-                    </Stack>
-                  </CardContent>
-
-                  <CardActions>
-                    <Button size="small" href={project.deploy} target="_blank">
-                      View project
-                    </Button>
-                  </CardActions>
-                </Card>
-              ))}
+                  {project.title}
+                </Typography>
+                <IconButton
+                  component="a"
+                  href={project.deploy}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  size="small"
+                  sx={(theme) => ({
+                    color: theme.palette.mode === "dark" ? "#fff" : "#000",
+                    transition: "transform 0.2s ease, color 0.2s ease",
+                    "&:hover": {
+                      color: theme.palette.primary.main,
+                      transform: "translateX(4px)",
+                    },
+                  })}
+                >
+                  <ArrowForwardIcon />
+                </IconButton>
+              </Box>
             </Box>
-
-            <Stack
-              direction="row"
-              spacing={2}
-              sx={{
-                position: "absolute",
-                bottom: 16,
-                left: "50%",
-                transform: "translateX(-50%)",
-              }}
-            >
-              <Button
-                ref={prevBtnRef}
-                variant="outlined"
-                startIcon={<ChevronLeftIcon />}
-              >
-                Prev
-              </Button>
-              <Button
-                ref={nextBtnRef}
-                variant="contained"
-                endIcon={<ChevronRightIcon />}
-              >
-                Next
-              </Button>
-            </Stack>
-          </Box>
+            );
+          })}
         </Box>
+
+        <IconButton onClick={handleNext} sx={navButtonSx}>
+          <ChevronRightIcon sx={navIconSx} />
+        </IconButton>
       </Box>
     </section>
   );

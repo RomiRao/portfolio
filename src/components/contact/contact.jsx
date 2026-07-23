@@ -40,14 +40,15 @@ function Contact({ id }) {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          marginBottom: 30,
+
           gap: 5,
           backgroundColor: "fondoTarjetitas.fondo",
           py: 5,
           border: "1px solid",
           borderColor: "fondoTarjetitas.borde",
           boxShadow: `0px 2px 14px 10px fondoTarjetitas.sombra`,
-          borderRadius: "20px",
+          borderTopLeftRadius: "20px",
+          borderTopRightRadius: "20px",
         }}
       >
         <Typography variant="h5">

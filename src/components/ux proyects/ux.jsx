@@ -8,6 +8,7 @@ import {
   CardContent,
 } from "@mui/material";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import { alpha } from "@mui/material/styles";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -75,7 +76,7 @@ const projects = [
     title: "Pausa",
     description:
       "Designed a tool to help people with anxiety attacks and be able to track their mental health.",
-    link: "/project/pausa",
+    link: "https://www.behance.net/gallery/226432465/PAUSA-(Proyecto-final-Coderhouse)",
     backgroundImage: portadaPausaFondo,
     screens: [screenPausa1, screenPausa2],
     bg: "#295f40",
@@ -99,16 +100,16 @@ function MetaChips({ project }) {
       <Chip
         label={project.category}
         size="small"
-        sx={{
-          bgcolor: "rgba(76, 175, 109, 0.12)",
-          color: "#8fd6a4",
+        sx={(theme) => ({
+          bgcolor: alpha(theme.palette.primary.main, 0.12),
+          color: theme.palette.primary.main,
           fontWeight: 500,
           fontSize: 10.5,
           textTransform: "uppercase",
           letterSpacing: "0.04em",
           borderRadius: "20px",
           height: 22,
-        }}
+        })}
       />
       <Chip
         label={project.role}
@@ -265,7 +266,6 @@ const ProjectCard = React.forwardRef(({ project, index }, ref) => {
               <Typography
                 color="primary"
                 sx={{
-                  fontFamily: "'Playfair Display', serif",
                   fontSize: { xs: 40, md: 80 },
                   fontWeight: 600,
                   lineHeight: 1.1,
@@ -362,7 +362,6 @@ function Ux({ id }) {
           flexDirection: "column",
           alignItems: "center",
           gap: { xs: 8, md: 12 },
-          marginBottom: 30,
           px: 2,
         }}
       >

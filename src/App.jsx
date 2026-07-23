@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDarkMode } from "./context/themeContext.jsx";
 import SkillsCarousel from "./components/skillsCarousel/skillsCarousel";
 
@@ -9,17 +9,14 @@ import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstruct
 import BrushIcon from "@mui/icons-material/Brush";
 import PersonIcon from "@mui/icons-material/Person";
 import MailIcon from "@mui/icons-material/Mail";
+import MenuIcon from "@mui/icons-material/Menu";
 
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import portadaOscuro1 from "./assets/fondo-1.png";
-import portadaOscuro2 from "./assets/fondo-2.png";
-import portadaOscuro3 from "./assets/fondo-3.png";
-import portadaOscuro4 from "./assets/fondo-4.png";
-import portadaClaro1 from "./assets/fondo-1-claro.png";
-import portadaClaro2 from "./assets/fondo-2-claro.png";
-import portadaClaro3 from "./assets/fondo-3-claro.png";
-import portadaClaro4 from "./assets/fondo-4-claro.png";
+import fondo3Dark from "./assets/fondo-3.svg";
+import fondo3Light from "./assets/fondo-3-claro.svg";
+import fondo4Dark from "./assets/fondo-4.svg";
+import fondo4Light from "./assets/fondo-4-claro.svg";
 
 import "./App.css";
 import Header from "./components/header/header";
@@ -27,6 +24,7 @@ import About from "./components/about me/about";
 import Ux from "./components/ux proyects/ux";
 import Front from "./components/front proyects/front";
 import Contact from "./components/contact/contact";
+import StarField from "./components/starField/StarField";
 import {
   Box,
   Button,
@@ -34,12 +32,25 @@ import {
   Toolbar,
   Typography,
   Container,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
 } from "@mui/material";
 
 gsap.registerPlugin(ScrollTrigger);
 
+const NAV_LINKS = [
+  { text: "UX/UI Projects", path: "#ux" },
+  { text: "Front Projects", path: "#front" },
+  { text: "About Me", path: "#about" },
+  { text: "Contact", path: "#contact" },
+];
+
 function App() {
   const { darkMode, handleThemeToggle, theme } = useDarkMode();
+  const [navOpen, setNavOpen] = useState(false);
 
   const sections = ["home", "ux", "skills", "front", "about", "contact"];
 
@@ -51,6 +62,8 @@ function App() {
     about: "#about",
     contact: "#contact",
   };
+
+  const introLayerRef = useRef(null);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -114,6 +127,35 @@ function App() {
           },
         });
       });
+
+      // 4. Capa de entrada (fondo-4 / reeds): al montar, desliza desde abajo
+      // hasta su posición de reposo; recién al terminar esa animación se
+      // engancha el mismo parallax de scroll que las demás capas, para que
+      // no compitan por la propiedad "y" al mismo tiempo.
+      const introLayer = introLayerRef.current;
+      if (introLayer) {
+        const introSpeed =
+          parseFloat(introLayer.getAttribute("data-speed")) || 0.85;
+
+        gsap.set(introLayer, { y: "60vh" });
+        gsap.to(introLayer, {
+          y: 0,
+          duration: 1.4,
+          ease: "power3.out",
+          onComplete: () => {
+            gsap.to(introLayer, {
+              y: `-${introSpeed * 200}vh`,
+              ease: "none",
+              scrollTrigger: {
+                trigger: "#home",
+                start: "top top",
+                end: "bottom top",
+                scrub: true,
+              },
+            });
+          },
+        });
+      }
     });
 
     return () => ctx.revert();
@@ -121,12 +163,11 @@ function App() {
 
   if (!theme) return null;
 
-  const parallaxLayers = darkMode
-    ? [portadaOscuro1, portadaOscuro2, portadaOscuro3, portadaOscuro4]
-    : [portadaClaro1, portadaClaro2, portadaClaro3, portadaClaro4];
-
-  // Velocidades escalonadas: a mayor velocidad, mayor altura para cubrir el desplazamiento sin dejar huecos
-  const parallaxSpeeds = [0.25, 0.45, 0.65, 0.85];
+  // Velocidades escalonadas: a mayor velocidad, mayor altura para cubrir el desplazamiento sin dejar huecos.
+  // (fondo-1 ya no es una imagen con parallax, así que arranca en la segunda velocidad.)
+  const starsSpeed = 0.45;
+  const gradientSpeed = 0.65;
+  const reedsSpeed = 0.85;
 
   return (
     <Box sx={{ minHeight: "100vh", color: theme.palette.text.primary }}>
@@ -146,42 +187,114 @@ function App() {
             {darkMode ? <WbSunnyIcon /> : <DarkModeIcon />}
           </IconButton>
           <Typography variant="h6" sx={{ flexGrow: 1 }}></Typography>
-          {[
-            { text: "UX/UI Projects", path: "#ux" },
-            { text: "Front Projects", path: "#front" },
-            { text: "About Me", path: "#about" },
-            { text: "Contact", path: "#contact" },
-          ].map(({ text, path }) => (
-            <Button key={text} color="inherit" component="a" href={path}>
-              {text}
-            </Button>
-          ))}
+
+          {/* Desktop: inline links */}
+          <Box sx={{ display: { xs: "none", md: "flex" } }}>
+            {NAV_LINKS.map(({ text, path }) => (
+              <Button key={text} color="inherit" component="a" href={path}>
+                {text}
+              </Button>
+            ))}
+          </Box>
+
+          {/* Mobile: hamburger menu */}
+          <IconButton
+            color="inherit"
+            edge="end"
+            onClick={() => setNavOpen(true)}
+            sx={{ display: { xs: "inline-flex", md: "none" } }}
+            aria-label="Open navigation menu"
+          >
+            <MenuIcon />
+          </IconButton>
         </Toolbar>
       </Box>
 
+      <Drawer anchor="right" open={navOpen} onClose={() => setNavOpen(false)}>
+        <Box sx={{ width: 240, pt: 2 }} role="presentation">
+          <List>
+            {NAV_LINKS.map(({ text, path }) => (
+              <ListItem key={text} disablePadding>
+                <ListItemButton
+                  component="a"
+                  href={path}
+                  onClick={() => setNavOpen(false)}
+                >
+                  <ListItemText primary={text} />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+        </Box>
+      </Drawer>
+
       {/* 2. CAPAS DEL FONDO (PARALLAX) */}
-      {parallaxLayers.map((image, index) => {
-        const speed = parallaxSpeeds[index];
-        return (
-          <Box
-            key={index}
-            className="parallax-bg"
-            data-speed={speed}
-            sx={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: `${100 + speed * 100 + 10}vh`,
-              zIndex: -1,
-              backgroundImage: `url(${image})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              backgroundRepeat: "no-repeat",
-            }}
-          />
-        );
-      })}
+
+      {/* Capa 1 (antes fondo-1): color sólido de fondo, sin parallax. */}
+      <Box
+        sx={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          zIndex: -2,
+          bgcolor: darkMode ? "#1F2644" : "#ffffff",
+        }}
+      />
+
+      {/* Capa 2 (antes fondo-2): campo de estrellas titilando. */}
+      <Box
+        className="parallax-bg"
+        data-speed={starsSpeed}
+        sx={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: `${100 + starsSpeed * 100 + 10}vh`,
+          zIndex: -1,
+        }}
+      >
+        <StarField darkMode={darkMode} />
+      </Box>
+
+      {/* Capa 3 (antes fondo-3): degradado svg. */}
+      <Box
+        className="parallax-bg"
+        data-speed={gradientSpeed}
+        sx={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: `${100 + gradientSpeed * 100 + 10}vh`,
+          zIndex: -1,
+          backgroundImage: `url(${darkMode ? fondo3Dark : fondo3Light})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }}
+      />
+
+      {/* Capa 4 (antes fondo-4): juncos svg. Arranca fuera de cuadro y
+          desliza hacia su posición de reposo al montar (ver useEffect). */}
+      <Box
+        ref={introLayerRef}
+        data-speed={reedsSpeed}
+        sx={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: `${100 + reedsSpeed * 100 + 10}vh`,
+          zIndex: -1,
+          backgroundImage: `url(${darkMode ? fondo4Dark : fondo4Light})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }}
+      />
 
       {/* 3. CONTENIDO DEL HEADER */}
       <Box
@@ -198,8 +311,9 @@ function App() {
           bgcolor: theme.palette.background.default,
           display: "flex",
           flexDirection: "column",
+          justifyContent: "space-between",
           gap: 30,
-          py: 15,
+          pt: 30,
         }}
       >
         {/* SKILLS - (Sin título scrolleable según tu último código) */}
@@ -210,20 +324,6 @@ function App() {
         {/* UX PROJECTS */}
         <Box id="ux" sx={{ scrollMarginTop: "64px" }}>
           <Container maxWidth="lg">
-            <Box
-              className="scroll-title"
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                marginBottom: 5,
-                // Alineación a la izquierda dentro del contenedor centrado
-                justifyContent: "flex-start",
-              }}
-            >
-              <Typography variant="h3" fontWeight="bold">
-                UX/UI Projects
-              </Typography>
-            </Box>
             <Ux />
           </Container>
         </Box>
@@ -255,22 +355,7 @@ function App() {
         </Box>
         {/* CONTACT */}
         <Box id="contact" sx={{ scrollMarginTop: "64px" }}>
-          <Container maxWidth="lg">
-            <Box
-              className="scroll-title"
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                marginBottom: 5,
-                justifyContent: "flex-start",
-              }}
-            >
-              <Typography variant="h3" fontWeight="bold">
-                Contact
-              </Typography>
-            </Box>
-            <Contact />
-          </Container>
+          <Contact />
         </Box>
       </Box>
     </Box>

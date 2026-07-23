@@ -27,13 +27,16 @@ export function ThemeProviderCustom({ children }) {
   };
 
   const theme = createTheme({
+    typography: {
+      fontFamily: '"Montserrat", sans-serif',
+    },
     palette: {
       mode: darkMode ? "dark" : "light",
       primary: {
-        main: darkMode ? "#50689C" : "#374b77",
+        main: darkMode ? "#da9328" : "#374b77",
       },
       secondary: {
-        main: darkMode ? "#28dacb" : "#0d6768",
+        main: darkMode ? "#50689C" : "#682e0d",
       },
       fondoTarjetitas: {
         fondo: darkMode ? "#111827" : "#fcf8f4",

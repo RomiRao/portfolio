@@ -26,24 +26,12 @@ function Header({ id }) {
       ease: "power2.out",
     });
 
-    // 2. Animamos la tercera línea justificando sus PALABRAS con Flexbox
-    // type: "words, chars" anida cada palabra en su propio contenedor, así
-    // el flexbox de abajo separa esas palabras entre sí sin tocar el
-    // espaciado de las letras dentro de cada una.
+    // 2. Animamos la tercera línea letra por letra, con las palabras juntas
+    // (espaciado normal, sin separarlas con flexbox).
     const splitThird = new SplitText(
       textRef.current.querySelector(".third-line"),
-      {
-        type: "words, chars",
-        charsClass: "justified-char",
-      },
+      { type: "chars" },
     );
-
-    // Truco: Aplicamos flexbox al contenedor para que distribuya las palabras de extremo a extremo
-    gsap.set(textRef.current.querySelector(".third-line"), {
-      display: "flex",
-      justifyContent: "space-between",
-      width: "100%",
-    });
 
     gsap.from(splitThird.chars, {
       opacity: 0,
@@ -86,9 +74,10 @@ function Header({ id }) {
       >
         <Typography
           sx={{
-            fontSize: 70,
+            fontSize: { xs: 28, sm: 42, md: 55, lg: 70 },
             lineHeight: 0.85, // Acerca el texto hacia abajo
             marginBottom: "0.1em", // Ajuste fino manual
+            ml: "10px",
           }}
           color="secondary"
           className="first-line"
@@ -98,7 +87,7 @@ function Header({ id }) {
 
         <Typography
           sx={{
-            fontSize: 200,
+            fontSize: { xs: 56, sm: 92, md: 140, lg: 200 },
             lineHeight: 1, // Reduce el interlineado drásticamente para pegarlo a las otras líneas
             fontWeight: "bold",
             letterSpacing: "-0.02em",
@@ -111,10 +100,10 @@ function Header({ id }) {
 
         <Typography
           sx={{
-            fontSize: 40,
+            fontSize: { xs: 16, sm: 22, md: 30, lg: 40 },
             lineHeight: 1,
             marginTop: "0.2em", // Ajuste fino manual para pegarlo al nombre
-            wordSpacing: "0em",
+
             textAlign: "center",
             width: "100%",
           }}

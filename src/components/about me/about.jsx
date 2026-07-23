@@ -165,7 +165,10 @@ function About({ id }) {
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: { xs: "repeat(4, auto)", md: "repeat(2, auto)" },
+                gridTemplateColumns: {
+                  xs: "repeat(4, auto)",
+                  md: "repeat(2, auto)",
+                },
                 gap: 1,
                 justifyContent: "center",
                 mt: { xs: 3, md: 0 },
