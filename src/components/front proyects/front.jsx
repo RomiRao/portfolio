@@ -99,6 +99,7 @@ const projects = [
 const ASPECT = 2.3;
 const ASPECT_MOBILE = 1;
 const STACK_FRACTION = 0.26; // stack card side, as a fraction of the front card's width
+const STACK_FRACTION_MOBILE = 0.36; // a bit bigger on small screens, easier to tap
 const STACK_GAP = 56; // px between the front card's bottom and the stack row
 const FAN_X_MULT = [-1, 0, 1];
 const FAN_ROTATE = [-8, 0, 8];
@@ -106,9 +107,9 @@ const FAN_Y_JITTER = [10, 0, 10];
 
 // Where/how big a card is, keyed by its distance behind the active card
 // (0 = front). `stageWidth` is the measured pixel width of the front card.
-function geometry(depth, stageWidth, aspect) {
+function geometry(depth, stageWidth, aspect, stackFraction) {
   const frontHeight = stageWidth / aspect;
-  const stackSize = stageWidth * STACK_FRACTION;
+  const stackSize = stageWidth * stackFraction;
 
   if (depth === 0) {
     return {
@@ -149,6 +150,7 @@ function Front({ id }) {
   const [stageWidth, setStageWidth] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const aspect = isMobile ? ASPECT_MOBILE : ASPECT;
+  const stackFraction = isMobile ? STACK_FRACTION_MOBILE : STACK_FRACTION;
   const stageRef = useRef(null);
   const cardRefs = useRef([]);
   cardRefs.current = [];
@@ -185,7 +187,7 @@ function Front({ id }) {
     if (!stageWidth) return;
     cardRefs.current.forEach((el, i) => {
       const depth = depthOf(i);
-      const target = geometry(depth, stageWidth, aspect);
+      const target = geometry(depth, stageWidth, aspect, stackFraction);
       gsap.killTweensOf(el);
       gsap.set(el, target);
       const footer = el.querySelector(".card-footer");
@@ -198,7 +200,7 @@ function Front({ id }) {
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stageWidth, aspect]);
+  }, [stageWidth, aspect, stackFraction]);
 
   useEffect(() => {
     if (isFirstActiveRender.current) {
@@ -208,7 +210,7 @@ function Front({ id }) {
     if (!stageWidth) return;
     cardRefs.current.forEach((el, i) => {
       const depth = depthOf(i);
-      const target = geometry(depth, stageWidth, aspect);
+      const target = geometry(depth, stageWidth, aspect, stackFraction);
       gsap.to(el, {
         ...target,
         duration: 0.6,
@@ -236,6 +238,25 @@ function Front({ id }) {
   const handlePrev = () =>
     setActiveIndex((i) => (i - 1 + projects.length) % projects.length);
 
+  // Swipe/drag support: swiping the stage left/right moves to the next/prev
+  // card, same as the arrow buttons. A small threshold keeps ordinary clicks
+  // on a stacked card (near-zero movement) from also triggering a swipe.
+  const dragState = useRef({ startX: 0, dragging: false, swiped: false });
+  const SWIPE_THRESHOLD = 40;
+
+  const handlePointerDown = (e) => {
+    dragState.current = { startX: e.clientX, dragging: true, swiped: false };
+  };
+  const handlePointerUp = (e) => {
+    if (!dragState.current.dragging) return;
+    dragState.current.dragging = false;
+    const delta = e.clientX - dragState.current.startX;
+    if (Math.abs(delta) < SWIPE_THRESHOLD) return;
+    dragState.current.swiped = true;
+    if (delta < 0) handleNext();
+    else handlePrev();
+  };
+
   const navButtonSx = {
     width: { xs: 44, sm: 56, md: 64 },
     height: { xs: 44, sm: 56, md: 64 },
@@ -262,7 +283,7 @@ function Front({ id }) {
           // The stacked cards below the active one are position:absolute, so
           // they don't add to this box's own height — reserve real layout
           // space for them here, or they'd visually overlap the next section.
-          pb: `${STACK_GAP + stageWidth * STACK_FRACTION + 24}px`,
+          pb: `${STACK_GAP + stageWidth * stackFraction + 24}px`,
         }}
       >
         <IconButton onClick={handlePrev} sx={navButtonSx}>
@@ -271,12 +292,16 @@ function Front({ id }) {
 
         <Box
           ref={stageRef}
+          onPointerDown={handlePointerDown}
+          onPointerUp={handlePointerUp}
+          onPointerLeave={handlePointerUp}
           sx={{
             position: "relative",
             width: "100%",
             flex: 1,
             minWidth: 0,
             aspectRatio: { xs: `${ASPECT_MOBILE}`, sm: `${ASPECT}` },
+            touchAction: "pan-y",
           }}
         >
           {projects.map((project, i) => {
@@ -286,7 +311,17 @@ function Front({ id }) {
             <Box
               key={project.title}
               ref={addCardRef}
-              onClick={isStacked ? () => setActiveIndex(i) : undefined}
+              onClick={
+                isStacked
+                  ? () => {
+                      if (dragState.current.swiped) {
+                        dragState.current.swiped = false;
+                        return;
+                      }
+                      setActiveIndex(i);
+                    }
+                  : undefined
+              }
               role={isStacked ? "button" : undefined}
               tabIndex={isStacked ? 0 : undefined}
               aria-label={isStacked ? `Show ${project.title}` : undefined}
@@ -315,6 +350,7 @@ function Front({ id }) {
                 component="img"
                 src={project.img}
                 alt={project.title}
+                draggable={false}
                 sx={{
                   width: "100%",
                   height: "100%",
