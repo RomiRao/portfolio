@@ -25,10 +25,16 @@ export const DEFAULT_PHONE_PRIMARY_SETTINGS =
 export const DEFAULT_PHONE_SECONDARY_SETTINGS =
   DEFAULT_PHONE_INSTANCE_SETTINGS[1];
 
-import iphoneModel from "../../assets/3d-model/phone/iphone.gltf?url";
-// Uncomment once the laptop .gltf is in place, then uncomment the "laptop"
-// entry in MODEL_CONFIG below — that's the only wiring needed.
-// import laptopModel from "../../assets/3d-model/laptop/laptop.gltf?url";
+// These live in /public (not /src/assets) and are referenced by a plain root
+// path rather than a JS import: the .gltf internally references sibling
+// files (scene.bin, textures/*.png) via relative URIs that Vite's
+// import-based asset pipeline has no way to discover and copy into the
+// build — only files under /public are guaranteed to keep their relative
+// layout intact in the production output.
+const iphoneModel = "/3d-model/phone/iphone.gltf";
+// Uncomment once the laptop .gltf is in place (same /public convention),
+// then uncomment the "laptop" entry in MODEL_CONFIG below.
+// const laptopModel = "/3d-model/laptop/laptop.gltf";
 
 // ────────────────────────────────────────────────────────────────────────────
 // Central model registry: add one entry per `type` you want PhoneMockup3D to
